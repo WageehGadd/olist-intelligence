@@ -1,0 +1,177 @@
+{
+  "checks": [
+    {
+      "id": "V-01",
+      "title": "Ledger schema, identity and value constraints",
+      "status": "PASS",
+      "evidence": "42 exact IDs, valid roles/scopes/statuses/priorities and finite nonnegative hours"
+    },
+    {
+      "id": "V-02",
+      "title": "Exact task-by-task plan/ledger agreement",
+      "status": "PASS",
+      "evidence": "Every summary and detailed spec reconciles fields, role metadata, dependencies including gate annotation, status and three hour budgets"
+    },
+    {
+      "id": "V-03",
+      "title": "Full DAG/spec dependency equality and acyclicity",
+      "status": "PASS",
+      "evidence": {
+        "edges": 62,
+        "missing_edges": [],
+        "extra_edges": [],
+        "cycle": false,
+        "critical_path_hours": 178.0,
+        "critical_path": [
+          "T-00",
+          "T-02",
+          "T-03",
+          "T-04",
+          "T-06",
+          "T-10",
+          "T-11",
+          "T-13",
+          "T-14",
+          "T-15",
+          "T-17",
+          "T-18",
+          "T-19",
+          "T-28",
+          "T-31",
+          "T-33",
+          "T-34",
+          "T-35",
+          "T-36",
+          "T-39",
+          "T-40"
+        ]
+      }
+    },
+    {
+      "id": "V-04",
+      "title": "Displayed owner/scope/role totals and member task hours",
+      "status": "PASS",
+      "evidence": {
+        "owner": {
+          "Hamza": 100.0,
+          "Hasnaa": 82.0,
+          "Rana": 76.0,
+          "Wageeh": 100.0
+        },
+        "reviewer_hours_by_person": {
+          "Hamza": 10.0,
+          "Hasnaa": 3.0,
+          "Instructor": 1.0,
+          "Rana": 5.0,
+          "Wageeh": 20.0
+        },
+        "collaborator_budget": "53 task-pooled hours; no per-person distribution is claimed",
+        "scope": {
+          "Advanced": 24.0,
+          "Governance": 18.0,
+          "MVP": 294.0,
+          "Optional": 22.0
+        },
+        "collaboration": 53.0,
+        "review": 39.0,
+        "assigned_total": 450.0,
+        "mandatory": [
+          312.0,
+          48.0,
+          34.0
+        ],
+        "optional": [
+          46.0,
+          5.0,
+          5.0
+        ]
+      }
+    },
+    {
+      "id": "V-05",
+      "title": "Schedule configuration, arithmetic and displayed verdicts",
+      "status": "PASS",
+      "evidence": [
+        {
+          "scenario": "6-week mandatory",
+          "capacity": 288,
+          "required": 460.8,
+          "balance": -172.8
+        },
+        {
+          "scenario": "8-week mandatory",
+          "capacity": 384,
+          "required": 460.8,
+          "balance": -76.80000000000001
+        },
+        {
+          "scenario": "10-week mandatory",
+          "capacity": 480,
+          "required": 460.8,
+          "balance": 19.19999999999999
+        },
+        {
+          "scenario": "10-week all-scope",
+          "capacity": 480,
+          "required": 523.7,
+          "balance": -43.700000000000045
+        }
+      ]
+    },
+    {
+      "id": "V-06",
+      "title": "All active API references, methods, definitions and screens",
+      "status": "PASS",
+      "evidence": {
+        "registry_entries": 10,
+        "active_paths": [
+          "/api/v1/analytics/categories",
+          "/api/v1/analytics/customers",
+          "/api/v1/analytics/geographic",
+          "/api/v1/analytics/sellers",
+          "/api/v1/analytics/summary",
+          "/api/v1/analytics/trends",
+          "/api/v1/health",
+          "/api/v1/models/metadata",
+          "/api/v1/predict/delivery-risk",
+          "/api/v1/predict/review-sentiment"
+        ],
+        "definitions": 10,
+        "screens": 7,
+        "historical_blocks": 1,
+        "mock_contracts": "Part8 JSON fixtures; separate implementation mock files do not yet exist"
+      }
+    },
+    {
+      "id": "V-07",
+      "title": "Separate approval-state predicate and task-unlocking contract",
+      "status": "PASS",
+      "evidence": {
+        "gate_logic": "consistent",
+        "runtime_gate": false,
+        "external_evidence_authenticated": false,
+        "limitation": "Task DAG and syntax cannot prove instructor approval or enforce future execution behavior"
+      }
+    },
+    {
+      "id": "V-08",
+      "title": "Planning input/feature contract and frozen fixture arithmetic",
+      "status": "PASS",
+      "evidence": {
+        "feature_count": 10,
+        "fixture_arithmetic": "verified",
+        "training_serving_pipeline_parity": "NOT IMPLEMENTED; future T-11/T-19/T-28 tests required",
+        "availability": "cart and promise snapshot assumptions, not historical proof"
+      }
+    },
+    {
+      "id": "V-09",
+      "title": "Preserved plan structure and real audit path references",
+      "status": "PASS",
+      "evidence": "19 parts, actual audit paths and retained Procedure A/B; semantics also require manual review"
+    }
+  ],
+  "consistent": true,
+  "approval_status": "OPEN — pending or blocked; formal implementation not unlocked",
+  "exit_code": 0
+}

@@ -1,0 +1,5 @@
+# Exact existing runtime used for T-00; no packages installed by the audit.
+pandas==2.3.3
+numpy==2.2.6
+scikit-learn==1.7.2
+pytest==9.1.1

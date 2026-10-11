@@ -1,0 +1,39 @@
+{
+  "team_size": 4,
+  "hours_per_person_week": 12,
+  "shared_hours_per_person": 5,
+  "contingency_rate": 0.15,
+  "contingency_basis": "selected scope owner hours",
+  "scenarios": [
+    {
+      "weeks": 6,
+      "scopes": [
+        "MVP",
+        "Governance"
+      ]
+    },
+    {
+      "weeks": 8,
+      "scopes": [
+        "MVP",
+        "Governance"
+      ]
+    },
+    {
+      "weeks": 10,
+      "scopes": [
+        "MVP",
+        "Governance"
+      ]
+    },
+    {
+      "weeks": 10,
+      "scopes": [
+        "MVP",
+        "Governance",
+        "Advanced",
+        "Optional"
+      ]
+    }
+  ]
+}

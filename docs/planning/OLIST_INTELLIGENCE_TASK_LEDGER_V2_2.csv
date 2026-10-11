@@ -1,0 +1,43 @@
+Task ID,Phase,Title,Owner,Reviewer,Collaborators,Dependencies,Priority,Scope,Estimated Owner Hours,Estimated Collaborator Hours,Estimated Reviewer Hours,Status,Gate,Deliverable
+T-00,0 — Governance,Dataset Feasibility Audit,Wageeh,N/A,,,,Governance,0,0,0,Completed locally,—,docs/audits/FINAL_DATASET_AUDIT_REPORT.md; scripts/audit/; tests/audit/; ignored data/processed/t00/
+T-01,0 — Governance,Concept Brief & Instructor Approval,Wageeh,Instructor,"Hamza, Hasnaa, Rana",T-00,P0,Governance,6,2,1,Planned,—,Concept brief document
+T-02,1 — Foundation,T-00 Integration & CI Foundation,Hamza,Wageeh,Wageeh,T-00,P0,MVP,10,2,1,Planned,Gate 1,CI workflow + Tier A fixtures
+T-03,2 — Data Architecture,Data Contracts & DB Schema Design,Wageeh,Hamza,Hamza,"T-01(approval_gate_passed), T-02",P0,MVP,12,2,1,Planned,Gate 1,Schema DDL + ADR-01
+T-04,2 — Data Architecture,ETL Pipeline Implementation,Hasnaa,Wageeh,Wageeh,T-03,P0,MVP,14,2,1,Planned,Gate 1,ETL scripts + loaded DB
+T-05,2 — Data Architecture,SQL Analytical Views,Hamza,Wageeh,Wageeh,T-04,P0,MVP,10,1,1,Planned,Gate 1,SQL views + reconciliation
+T-06,2 — Data Architecture,Data Quality Test Suite,Rana,Wageeh,Wageeh,T-04,P0,MVP,10,1,1,Planned,Gate 1,Tier A+B test suite
+T-07,3 — Analytics,Business Analytics Module,Hamza,Rana,Wageeh,T-05,P0,MVP,8,1,1,Planned,—,Analytics queries + visualizations
+T-08,3 — Analytics,Customer RFM & Cohort Analysis,Hasnaa,Hamza,Wageeh,T-05,P0,MVP,8,1,1,Planned,—,RFM module + cohort tables
+T-09,3 — Analytics,Geographic & Seller Analytics,Rana,Hamza,Wageeh,T-05,P0,MVP,8,1,1,Planned,—,Geographic aggregation module
+T-10,4 — Delivery ML,Delivery Target & Population Builder,Wageeh,Rana,Rana,"T-04, T-06",P0,MVP,8,1,1,Planned,Gate 2,Target definitions + population counts
+T-11,4 — Delivery ML,Delivery Feature Engineering,Wageeh,Hamza,Hamza,T-10,P0,MVP,10,1,1,Planned,Gate 2,Feature matrix + availability contracts
+T-12,3 — Analytics,Customer Clustering (Optional),Hasnaa,Hamza,Wageeh,T-08,P2,Optional,8,1,1,Planned,—,K-Means clustering module
+T-13,4 — Delivery ML,Chronological Split Implementation,Rana,Wageeh,Wageeh,T-11,P0,MVP,6,1,1,Planned,Gate 2,Splitter module + count verification
+T-14,4 — Delivery ML,Delivery Baseline Models,Wageeh,Hamza,Hamza,T-13,P0,MVP,10,1,1,Planned,Gate 2,Dummy + LogReg baselines
+T-15,4 — Delivery ML,Tree Model Experiments,Hamza,Wageeh,Wageeh,T-14,P1,MVP,10,1,1,Planned,Gate 2,Decision tree + random forest results
+T-16,4 — Delivery ML,Gradient Boosted Trees (Advanced),Wageeh,Hamza,Hamza,T-15,P1,Advanced,8,1,1,Planned,Gate 2,XGBoost/LightGBM comparison
+T-17,4 — Delivery ML,Calibration & Threshold Selection,Wageeh,Rana,Rana,"T-14, T-15",P0,MVP,8,1,1,Planned,Gate 2,Calibrated model + threshold report
+T-18,8 — Integration,Explainability Module,Hasnaa,Wageeh,Wageeh,T-17,P0,MVP,10,1,1,Planned,—,Permutation importance + optional SHAP
+T-19,4 — Delivery ML,Delivery Model Packaging & Inference Contracts,Wageeh,Hamza,Hamza,"T-17, T-18",P0,MVP,8,1,1,Planned,—,Serialized package + inference API
+T-20,5 — NLP,Review Label Construction,Rana,Wageeh,Wageeh,T-04,P0,MVP,8,1,1,Planned,Gate 3,Label matrix + exclusion documentation
+T-21,5 — NLP,NLP Preprocessing & Classical Baseline,Hasnaa,Wageeh,Wageeh,T-20,P0,MVP,12,1,1,Planned,Gate 3,TF-IDF + LogReg pipeline
+T-22,5 — NLP,DL Comparison (CNN),Hamza,Wageeh,Wageeh,T-21,P0,MVP,10,1,1,Planned,Gate 3,CNN model + comparison report
+T-22B,5 — NLP,NLP Model Packaging & Inference Contracts,Hasnaa,Wageeh,Wageeh,T-22,P0,MVP,6,1,1,Planned,Gate 3,Serialized NLP package + inference contract
+T-23,5 — NLP,BERTimbau Fine-tuning (Optional),Wageeh,Hasnaa,Hasnaa,T-22,P2,Optional,14,1,1,Planned,—,Fine-tuned BERTimbau model
+T-24,5 — NLP,Review Risk Prediction (Advanced),Hamza,Wageeh,Wageeh,"T-20, T-11, T-13",P1,Advanced,10,1,1,Planned,—,Purchase-time review-risk model
+T-25,8 — Integration,Experiment Tracking (Advanced),Rana,Wageeh,Wageeh,"T-14, T-21",P1,Advanced,6,1,1,Planned,—,MLflow setup + experiment logs
+T-26,6 — API,API Design & Contract Specification,Wageeh,Hamza,Hamza,"T-03, T-05",P0,MVP,6,1,1,Planned,Gate 4,OpenAPI spec + Pydantic schemas + mock contracts
+T-27,6 — API,API Core Implementation,Hamza,Wageeh,Wageeh,T-26,P0,MVP,10,1,1,Planned,Gate 4,FastAPI application + core endpoints
+T-28,6 — API,API Prediction Endpoints,Hasnaa,Wageeh,Wageeh,"T-27, T-19, T-22B",P0,MVP,8,1,1,Planned,Gate 4,Prediction endpoints + inference integration
+T-29,7 — Frontend,Frontend Scaffold & Routing,Rana,Hasnaa,Hasnaa,T-26,P0,MVP,8,1,1,Planned,—,React app scaffold + routing
+T-30,7 — Frontend,Dashboard Screens,Hamza,Rana,Hasnaa,"T-27, T-07, T-08, T-09",P0,MVP,14,2,1,Planned,Gate 5,Overview + Sales + Geographic + Customer screens
+T-31,7 — Frontend,Prediction UI Screens,Hasnaa,Rana,Rana,"T-28, T-30",P0,MVP,10,1,1,Planned,Gate 5,Delivery Risk + Review Analyzer screens
+T-32,7 — Frontend,Model Insights Screen,Rana,Hasnaa,Hasnaa,"T-18, T-28",P0,MVP,6,1,1,Planned,Gate 5,Model metadata + explainability display
+T-33,8 — Integration,End-to-End Integration,Hamza,Wageeh,Wageeh,"T-31, T-32",P0,MVP,10,2,1,Planned,Gate 5,Full stack integration verified
+T-34,8 — Integration,Explainability Integration,Hasnaa,Wageeh,Wageeh,"T-18, T-33",P0,MVP,6,1,1,Planned,—,SHAP/importance in frontend
+T-35,9 — QA & Release,End-to-End Testing,Rana,Wageeh,Wageeh,"T-34, T-33",P0,MVP,8,2,1,Planned,—,Test suite + test report
+T-36,9 — QA & Release,Documentation & Model Cards,Hamza,Wageeh,"Wageeh, Hasnaa, Rana",T-35,P0,MVP,8,2,1,Planned,—,README + model cards + API docs
+T-37,9 — QA & Release,CI/CD Pipeline,Rana,Wageeh,Wageeh,"T-02, T-06",P0,MVP,8,1,1,Planned,Gate 6,CI config + Tier A green
+T-38,9 — QA & Release,Demo Environment & Deployment,Wageeh,Hamza,Rana,"T-37, T-35",P1,MVP,6,1,1,Planned,Gate 6,Demo script or Docker Compose
+T-39,9 — QA & Release,Presentation Preparation,Rana,Wageeh,"Wageeh, Hamza, Hasnaa","T-36, T-38",P0,Governance,8,4,0,Planned,Gate 6,Slide deck + demo script
+T-40,9 — QA & Release,Final Release & Handoff,Wageeh,Hamza,"Hamza, Hasnaa, Rana",T-39,P0,Governance,4,2,0,Planned,Gate 6,Tagged release + handoff checklist

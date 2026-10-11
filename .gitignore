@@ -236,5 +236,43 @@ __pycache__/
 !.env.example
 
 # Models and experiments
-models/
+/models/
 mlruns/
+
+# Team-sharing safety: generated data and local databases
+/data/generated/
+/data/interim/
+/data/exports/
+/artifacts/
+*.sqlite
+*.sqlite3
+*.duckdb
+*.db
+
+# Serialized models / weights anywhere; keep src/models/ source publishable
+*.pkl
+*.pickle
+*.joblib
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.hdf5
+*.keras
+*.onnx
+*.safetensors
+*.bin
+
+# Local secrets and credentials; .env.example must contain placeholders only
+.secrets/
+secrets/
+.aws/
+.ssh/
+credentials.json
+service-account*.json
+*.pem
+*.key
+
+# Exploratory notebooks can embed authentic data
+*.ipynb
+.DS_Store

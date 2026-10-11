@@ -1,0 +1,12 @@
+{
+  "seed": 42,
+  "raw_dir": "data/raw",
+  "output_dir": "data/processed/t00",
+  "duration_threshold_days": 30,
+  "train_end": "2018-01-01",
+  "validation_end": "2018-04-01",
+  "test_end": "2018-09-01",
+  "customer_cutoffs": ["2017-10-01", "2018-01-01", "2018-04-01"],
+  "customer_horizon_days": 90,
+  "customer_observation_days": 180
+}

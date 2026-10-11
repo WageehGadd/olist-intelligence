@@ -1,0 +1,150 @@
+{
+  "schema_version": "purchase-v1",
+  "snapshot": "purchase_creation",
+  "raw_fields": {
+    "purchase_timestamp": {
+      "type": "ISO local naive datetime",
+      "required": true
+    },
+    "estimated_delivery_date": {
+      "type": "ISO date",
+      "required": true
+    },
+    "customer_state": {
+      "type": "Brazilian state code",
+      "required": true
+    },
+    "items": {
+      "type": "nonempty array of unit items",
+      "required": true,
+      "required_fields": [
+        "product_key",
+        "seller_key",
+        "price_brl",
+        "freight_value_brl"
+      ]
+    }
+  },
+  "features": [
+    {
+      "name": "item_count",
+      "transformation": "len(items)",
+      "source": "order_items.order_item_id",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "item_price",
+      "transformation": "sum(item.price_brl)",
+      "source": "order_items.price",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "freight",
+      "transformation": "sum(item.freight_value_brl)",
+      "source": "order_items.freight_value",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "seller_count",
+      "transformation": "count distinct seller_key",
+      "source": "order_items.seller_id",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "product_count",
+      "transformation": "count distinct product_key",
+      "source": "order_items.product_id",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "purchase_hour",
+      "transformation": "hour(purchase_timestamp)",
+      "source": "orders.order_purchase_timestamp",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "purchase_weekday",
+      "transformation": "weekday(purchase_timestamp), Monday=0",
+      "source": "orders.order_purchase_timestamp",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "purchase_month",
+      "transformation": "month(purchase_timestamp)",
+      "source": "orders.order_purchase_timestamp",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "promise_days",
+      "transformation": "(estimated_delivery_date at midnight - purchase_timestamp).total_seconds / 86400",
+      "source": "orders.order_estimated_delivery_date; order_purchase_timestamp",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    },
+    {
+      "name": "customer_state",
+      "transformation": "customer_state, train-only one-hot",
+      "source": "customers.customer_state",
+      "inference_source": "computed from user-entered request",
+      "earliest_availability": "purchase creation (cart/promise snapshot assumption)",
+      "missing_behavior": "422 for missing mandatory raw fields"
+    }
+  ],
+  "forbidden_inputs": [
+    "payment_installments",
+    "payment_value",
+    "actual_delivery_date",
+    "review_score",
+    "review_text",
+    "order_status"
+  ],
+  "lookups_required": [],
+  "unknown_categories": "customer_state must be valid state code; fitted encoder handles unseen valid states",
+  "timestamp_policy": "explicit historical local wall-clock; reject offsets until a versioned timezone policy exists; never server time",
+  "numeric_policy": "finite nonnegative unit price/freight; zero allowed and flagged; validate precision; one unit per item row",
+  "promise_policy": "date >= purchase calendar date; midnight semantics retained for promise_days",
+  "extra_fields": "reject 422",
+  "fixture": {
+    "purchase_timestamp": "2018-05-10T10:30:00",
+    "estimated_delivery_date": "2018-05-25",
+    "customer_state": "SP",
+    "items": [
+      {
+        "product_key": "synthetic-product-a",
+        "seller_key": "synthetic-seller-a",
+        "price_brl": 120.0,
+        "freight_value_brl": 25.0
+      }
+    ]
+  },
+  "fixture_expected_features": {
+    "item_count": 1,
+    "item_price": 120.0,
+    "freight": 25.0,
+    "seller_count": 1,
+    "product_count": 1,
+    "purchase_hour": 10,
+    "purchase_weekday": 3,
+    "purchase_month": 5,
+    "promise_days": 14.5625,
+    "customer_state": "SP"
+  },
+  "limitations": "Academic retrospective simulator; final cart/original promise availability and live performance unverified"
+}
