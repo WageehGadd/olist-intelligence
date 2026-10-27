@@ -2,7 +2,7 @@
 
 Explainable E-Commerce Analytics & Predictive Intelligence Platform — DEPI Round 5 Data Scientist graduation project.
 
-**Current stage: team onboarding only. Instructor approval is pending. No project task should begin without team-lead coordination.** The repository currently contains the completed local T-00 audit and proposed execution planning; the FastAPI/React application and production models have not been implemented.
+**Current stage: T-01 documentation under team-lead review. Instructor approval is user-reported, dated October 26, 2026; independent authentication is not claimed. No other project task should begin without team-lead coordination.** See the [concept brief](docs/concept_brief.md) and [approval record](docs/approval/T-01_instructor_approval.md). The repository currently contains the completed local T-00 audit and proposed execution planning; the FastAPI/React application and production models have not been implemented.
 
 ## Start here
 
@@ -15,4 +15,4 @@ Explainable E-Commerce Analytics & Predictive Intelligence Platform — DEPI Rou
 
 V2.2 defines scope, ownership and dependencies. The onboarding guide is a summary, not a replacement plan. Our four-member team is Wageeh Gadd (team lead), Hamza, Hasnaa and Rana. The planned platform combines SQL analytics, descriptive customer intelligence, delivery risk prediction, post-review Portuguese rating-proxy NLP with a DL comparison, explainability, FastAPI and React.
 
-Raw datasets, generated data, virtual environments, credentials and model binaries stay out of Git. The dataset source is [Olist on Kaggle](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce); publisher license confirmation remains open. This repository is not a dataset distribution. Existing audit scripts/tests need local inputs for full reproduction; do not run training or development during onboarding. No CI or production-readiness claim is made.
+Raw datasets, generated data, virtual environments, credentials and model binaries stay out of Git. The dataset source is [Olist on Kaggle](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce); publisher license confirmation remains open. This repository is not a dataset distribution. Existing audit scripts/tests need local inputs for full reproduction; no training or other technical development is authorized by this T-01 update. No CI or production-readiness claim is made.
