@@ -62,11 +62,12 @@ def test_mutation_fails_expected_check_and_cli(name,expected,package,tmp_path):
     assert process.returncode==1,process.stdout+process.stderr
     assert json.loads(process.stdout)['exit_code']==1
 
-def test_final_package_consistent_but_approval_open(package):
+def test_final_package_consistent_and_approval_matches_record(package):
     result=execute(package)
     assert result['consistent']
     assert all(c['status']=='PASS' for c in result['checks'])
-    assert result['approval_status'].startswith('OPEN')
+    expected_prefix='PASSED' if v.approval_passed(package[3]) else 'OPEN'
+    assert result['approval_status'].startswith(expected_prefix)
 
 @pytest.mark.parametrize('state,closed,incorporated,accepted,evidence,expected',[
     ('Proposal prepared',False,False,False,None,False),
@@ -89,9 +90,10 @@ def test_rejected_administrative_closure_never_unlocks_implementation(package):
     result=v.validate_documents(rows,text,schedule,approval,contract)
     assert result['consistent'] and result['approval_status'].startswith('OPEN')
 
-def test_require_approval_cli_exits_two():
+def test_require_approval_cli_matches_record():
     result=subprocess.run([sys.executable,'-B',str(SCRIPT),'--require-approval'],capture_output=True,text=True)
-    assert result.returncode==2
+    recorded=json.loads((DIR/'approval_state_v2_2.json').read_text())
+    assert result.returncode==(0 if v.approval_passed(recorded) else 2)
     assert json.loads(result.stdout)['consistent'] is True
 
 def test_unavailable_files_fail_nonzero(tmp_path):
@@ -121,3 +123,50 @@ def test_historical_routes_are_explicitly_excluded_not_keyword_skipped(package):
     # Ordinary words like "phantom" do not exempt an active route.
     result=v.validate_documents(rows,text+'\nphantom mock POST /api/v1/not-registered\n',schedule,approval,contract)
     assert any(c['id']=='V-06' and c['status']=='FAIL' for c in result['checks'])
+
+
+def test_pending_state_explicitly_keeps_implementation_gate_closed(package):
+    rows,text,schedule,_,contract=package
+    pending={'current_state':'Awaiting instructor response','administrative_workflow_closed':False,'conditions_incorporated':False,'conditions_accepted':False,'approval_evidence':None,'approval_gate_passed':False}
+    result=v.validate_documents(rows,text,schedule,pending,contract)
+    assert result['consistent'] and result['approval_status'].startswith('OPEN')
+    assert not v.approval_passed(pending)
+
+
+def test_t01_user_report_reference_resolves_without_claiming_authentication(package):
+    rows,text,schedule,_,contract=package
+    approval={'current_state':'Approved','administrative_workflow_closed':True,'conditions_incorporated':False,'conditions_accepted':False,'approval_evidence':'docs/approval/T-01_instructor_approval.md#user-reported-instructor-approval','approval_gate_passed':True}
+    assert set(approval)=={'current_state','administrative_workflow_closed','conditions_incorporated','conditions_accepted','approval_evidence','approval_gate_passed'}
+    assert approval['current_state']=='Approved' and approval['approval_gate_passed']
+    path,anchor=approval['approval_evidence'].split('#',1)
+    evidence=(ROOT/path).read_text()
+    assert anchor=='user-reported-instructor-approval'
+    assert '## User-reported instructor approval' in evidence
+    assert 'October 26, 2026' in evidence
+    assert 'not independently verified documentary evidence' in evidence
+    result=v.validate_documents(rows,text,schedule,approval,contract)
+    check=next(c for c in result['checks'] if c['id']=='V-07')
+    assert check['status']=='PASS'
+    assert check['evidence']['external_evidence_authenticated'] is False
+
+
+def test_approved_without_reference_is_not_a_successful_record(package):
+    rows,text,schedule,approval,contract=copy.deepcopy(package)
+    approval.update(current_state='Approved',administrative_workflow_closed=True,approval_gate_passed=True,approval_evidence=None)
+    result=v.validate_documents(rows,text,schedule,approval,contract)
+    assert not v.approval_passed(approval)
+    assert any(c['id']=='V-07' and c['status']=='FAIL' for c in result['checks'])
+
+
+@pytest.mark.parametrize('state,closed',[
+    ('Awaiting instructor response',False),
+    ('Rejected',True),
+    ('Approved with conditions',True),
+])
+def test_unapproved_state_cli_remains_blocked(state,closed,tmp_path):
+    record={'current_state':state,'administrative_workflow_closed':closed,'conditions_incorporated':False,'conditions_accepted':False,'approval_evidence':None,'approval_gate_passed':False}
+    path=tmp_path/'approval.json'
+    path.write_text(json.dumps(record))
+    result=subprocess.run([sys.executable,'-B',str(SCRIPT),'--approval',str(path),'--require-approval'],capture_output=True,text=True)
+    assert result.returncode==2
+    assert json.loads(result.stdout)['consistent'] is True

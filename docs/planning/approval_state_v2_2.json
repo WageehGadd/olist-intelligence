@@ -1,8 +1,8 @@
 {
-  "current_state": "Awaiting instructor response",
-  "administrative_workflow_closed": false,
+  "current_state": "Approved",
+  "administrative_workflow_closed": true,
   "conditions_incorporated": false,
   "conditions_accepted": false,
-  "approval_evidence": null,
-  "approval_gate_passed": false
+  "approval_evidence": "docs/approval/T-01_instructor_approval.md#user-reported-instructor-approval",
+  "approval_gate_passed": true
 }

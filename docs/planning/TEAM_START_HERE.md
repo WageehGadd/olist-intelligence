@@ -1,6 +1,6 @@
 # Team Start Here — Olist Intelligence
 
-For Wageeh, Hamza, Hasnaa and Rana. **Current stage: team onboarding only. Instructor approval is pending. No T-01–T-40 task is authorized to start by this guide. Coordinate every technical task with Wageeh first, even if its dependencies appear satisfied.**
+For Wageeh, Hamza, Hasnaa and Rana. **Current stage: T-01 documentation under team-lead review. Instructor approval is user-reported, dated October 26, 2026; independent authentication is not claimed. No other task is authorized by this guide. Coordinate every technical task with Wageeh first, even if its dependencies appear satisfied.** See the [approval record](../approval/T-01_instructor_approval.md) and [concept brief](../concept_brief.md).
 
 ## What we are building
 
@@ -18,11 +18,11 @@ V2.2 remains the official planning source of truth. This guide summarizes it; it
 
 ## What can happen now, and what is blocked
 
-Now: read the plan/audit, understand your assignments, discuss skills/access and ask Wageeh about coordination. No training, ETL, API, frontend, CI implementation, proposal work or repository integration task begins during this onboarding-only stage.
+Now: read the plan/audit, understand your assignments, discuss skills/access and ask Wageeh about coordination. Only T-01 proposal/approval documentation is currently authorized. No training, ETL, API, frontend, CI implementation or T-02 repository integration is started by this update.
 
-T-00 is completed locally; its source/reports/tests still await sharing/review/integration. T-01 (Wageeh) and T-02 (Hamza) have their T-00 dependency met, but both await a separate team-lead start decision. T-02 may later proceed before instructor approval as V2.2 allows; this guide does not authorize it or complete its CI/fixture/PR integration work.
+T-00 is completed locally, and its source/reports/tests are present in the published baseline. T-01 (Wageeh) is authorized for this documentation update; the new brief awaits review/submission confirmation. T-02 (Hamza) has its T-00 dependency met but still awaits a separate team-lead start decision and its own CI/fixture/integration deliverables. T-02 may later proceed before instructor approval as V2.2 allows; this guide does not authorize it or complete its CI/fixture/PR integration work.
 
-T-03 additionally needs T-02 complete AND `approval_gate_passed=true`. A recorded rejection never unlocks implementation; conditional approval requires incorporated changes accepted by the instructor, with evidence. Formal T-03 and downstream tasks remain blocked until that gate passes. Every task also needs all listed predecessor tasks completed, the Part 11 preconditions and team-lead coordination. Optional/Advanced tasks require explicit scope/budget coordination and never block mandatory delivery. T-23 additionally needs confirmed GPU access. No academic deadline is assumed.
+T-03 additionally needs T-02 complete AND `approval_gate_passed=true`. A recorded rejection never unlocks implementation; conditional approval requires incorporated changes accepted by the instructor, with evidence. The current gate passes on the attributed user report; T-03 remains blocked by T-02 and its other preconditions. The list below retains the original task allocation and prerequisite summaries; it does not claim the approval gate is still pending. Every task also needs all listed predecessor tasks completed, the Part 11 preconditions and team-lead coordination. Optional/Advanced tasks require explicit scope/budget coordination and never block mandatory delivery. T-23 additionally needs confirmed GPU access. No academic deadline is assumed.
 
 ## Assigned owner tasks — dependency order
 
@@ -31,7 +31,7 @@ The lists below follow a topological order of the unchanged canonical graph, not
 ### Wageeh
 
 - **T-00 — Dataset Feasibility Audit** (Governance, 0h). After: none. Completed locally; integration remains T-02.
-- **T-01 — Concept Brief & Instructor Approval** (Governance, 6h). After: T-00. Dependency met; awaiting team-lead start decision.
+- **T-01 — Concept Brief & Instructor Approval** (Governance, 6h). After: T-00. Authorized documentation update under review; newly prepared brief submission remains unverified.
 - **T-03 — Data Contracts & DB Schema Design** (MVP, 12h). After: T-01(approval_gate_passed), T-02. Blocked by prerequisites / approval gate.
 - **T-10 — Delivery Target & Population Builder** (MVP, 8h). After: T-04, T-06. Blocked by prerequisites / approval gate.
 - **T-26 — API Design & Contract Specification** (MVP, 6h). After: T-03, T-05. Blocked by prerequisites / approval gate.
