@@ -1,17 +1,17 @@
 # T-01 — Implementation and verification report
 
-Date: October 27, 2026. Task owner: Wageeh Hussain Wageeh (Team Leader), canonical alias Wageeh. Status: documentation prepared and user-reported approval recorded; owner review and brief-submission confirmation outstanding.
+Date: October 27, 2026. Task owner: Wageeh Hussain Wageeh (Team Leader), canonical alias Wageeh. Status: implementation accepted for GitHub review; original proposal submission and verbal approval recorded as user-reported. Equivalence to the required brief remains pending; the later concept brief has not been separately submitted.
 
 ## Repository and branch
 
-Repository identity: `WageehGadd/olist-intelligence`, verified Private through authenticated GitHub access; origin `https://github.com/WageehGadd/olist-intelligence.git`. The old Desktop path was unavailable, so the repository was cloned to `/private/tmp/olist-intelligence-t01` on main. After fetching origin/main, local branch `feature/T-01-instructor-approval` was created from `5c75190894bc5981c7ef3118e2ca26fa41c54afc`, the latest fetched main. No commit, push, merge or pull request was created. No unrelated repository was inspected.
+Repository identity: `WageehGadd/olist-intelligence`, verified Private through authenticated GitHub access; origin `https://github.com/WageehGadd/olist-intelligence.git`. The old Desktop path was unavailable, so the repository was cloned to `/private/tmp/olist-intelligence-t01` on main. After fetching origin/main, local branch `feature/T-01-instructor-approval` was created from `5c75190894bc5981c7ef3118e2ca26fa41c54afc`, the latest fetched main. The initial report preceded publication commit `2c03e5e5dd311288aacf06abdd2af0bb5536da44` and PR #1. This correction records the subsequently clarified submission/discussion/approval facts on the same feature branch; it does not merge the PR or authorize another task. No unrelated repository was inspected.
 
 T-00 is Completed locally in the canonical ledger; its committed report, scripts/tests and validation record support that prerequisite. These are historical completed-audit records, not a claim that full-data tests were rerun in this source-only checkout. T-01's only task dependency is T-00, and its stated prerequisite is satisfied.
 
 ## Files changed
 
 - `docs/concept_brief.md` — required T-01 brief: problem, academic context, dataset, unchanged scope/modules, methodology, evaluation, team structure, deliverables, feasibility and limits.
-- `docs/approval/T-01_instructor_approval.md` — dated, attributed user-report provenance and gate rationale; no fabricated instructor identity, letter, signature or evidence URL.
+- `docs/approval/T-01_instructor_approval.md` — dated, attributed user-report provenance and gate rationale, including the original proposal being sent and then verbally discussed/approved; no fabricated instructor identity, letter, signature or evidence URL.
 - `docs/planning/approval_state_v2_2.json` — existing six-key schema; Approved, administrative closure true and gate true, referencing the local user-report record. No invented schema date/evidence-type keys were added; those details live in the referenced document.
 - `README.md` — replaces obsolete current pending/onboarding-only text with T-01 review status and evidence-qualified approval links.
 - `docs/planning/TEAM_START_HERE.md` — same focused current-status correction; task ownership/dependencies/scope unchanged; T-02/T-03 are not started or marked complete.
@@ -35,11 +35,16 @@ No T-00 baseline training, ETL, model training, API/frontend development, CI imp
 ## Acceptance criteria and gate outcome
 
 - **Dependency / precondition — SATISFIED:** T-00 completion is recorded and supported by committed audit evidence.
-- **Concept brief — PREPARED:** required content is present for owner review at the specified path.
-- **Brief submitted — OPEN / NOT VERIFIED:** this document was prepared after the reported approval; no transmission or earlier submission of this exact brief is asserted. Confirm submission or its relationship to the original approved proposal before final task closure.
-- **Approval state tracked — SATISFIED, user-report evidence level:** user-reported instructor approval dated October 26, 2026, as an extended version of DEPI Project #7. The local evidence reference documents that report; it is not independently verified instructor evidence.
+- **Concept brief — PREPARED, NOT SEPARATELY SUBMITTED:** the later file contains the required content; the team leader explicitly confirms it has not been separately sent.
+- **Original proposal sent — SATISFIED AT USER-REPORT LEVEL:** the team leader confirms it was sent before the verbal discussion and approval; no submission date or original text is available.
+- **Canonical “Brief submitted” — PENDING EQUIVALENCE CONFIRMATION:** the wording does not require this later file specifically to have been sent earlier, so the original proposal could qualify. Its contents or confirmation that it covered the required T-01 brief content have not been supplied; equivalence cannot be established. Confirm content/equivalence, or submit the later brief if appropriate. Do not confuse the original submission with submission of the new file.
+- **Approval state tracked — SATISFIED, user-report evidence level:** the original proposal was verbally discussed and verbally approved by the instructor, with approval previously reported as October 26, 2026. The extended DEPI Project #7 framing is unchanged. No written approval or independently verified instructor evidence is claimed.
 - **Rejection escalation — NOT APPLICABLE:** Approved is the state reported. Rejected and conditional states still enforce the unchanged rules in tests.
 - **Approval milestone — PASSES existing V2.2 predicate:** Approved plus nonempty evidence reference. Independent authentication remains explicitly unclaimed. V2.2 currently does not require a signed letter or external URL; no validator rule was weakened to admit this report.
-- **All T-01 acceptance criteria fully closed — NOT CLAIMED:** submission confirmation and owner review remain outstanding, so the brief is not silently declared submitted or the whole task marked Completed.
+- **All T-01 acceptance criteria fully closed — NOT CLAIMED:** the user accepted the implementation for GitHub review, but original-proposal/required-brief equivalence remains pending. The later brief is not declared submitted and the canonical ledger task is not marked Completed.
 
-T-03 still needs T-02 completion as well as approval. Approval does not authorize this agent to start any further task. No extra instructor conditions have been reported; if later supplied, record them and evaluate their acceptance before claiming that gate is satisfied. The Project #7 booklet mapping and official deadlines were not supplied; none were invented. Review and merge/PR workflow remain future owner-authorized actions.
+T-03 still needs T-02 completion as well as approval. Approval does not authorize this agent to start any further task. No extra instructor conditions have been reported; if later supplied, record them and evaluate their acceptance before claiming that gate is satisfied. The Project #7 booklet mapping and official deadlines were not supplied; none were invented. PR #1 remains subject to reviewer approval and the documented bootstrap CI disposition. Hosted CI is unavailable until T-02; the checks above are local, not GitHub CI. No merge or other task is authorized by this correction.
+
+## Clarification-only correction
+
+This follow-up changes only this report, the instructor approval record and the concept brief's submission/provenance sentences. It separates the original sent proposal, the subsequent verbal discussion/approval and the later unsubmitted file. Approval-state JSON, its six-key schema, the canonical plan/ledger, validator and tests are unchanged. The same local validators/tests and whitespace checks are rerun for this correction; no hosted CI success is claimed.

@@ -2,7 +2,7 @@
 
 Prepared: October 27, 2026. Task owner: **Wageeh Hussain Wageeh (Team Leader)**, identified as **Wageeh** in the unchanged canonical ledger. Collaborators: Hamza, Hasnaa and Rana. Academic reviewer: Instructor; identity not supplied.
 
-**Status:** prepared for team-lead review following user-reported instructor approval dated October 26, 2026. The user reports that Olist Intelligence was accepted as an extended version of **DEPI Project #7**. This newly prepared brief is not represented as the document previously submitted or approved. Its submission has not been independently verified.
+**Status:** prepared for team-lead review following user-reported instructor approval dated October 26, 2026. The user reports that Olist Intelligence was accepted as an extended version of **DEPI Project #7**. This newly prepared brief is not represented as the document previously submitted or approved. The team leader confirms that it has not been separately submitted. The original proposal was sent to the instructor, then discussed and verbally approved, according to the team leader; the original proposal's contents have not been supplied to establish equivalence with this brief.
 
 ## Purpose and academic context
 
@@ -52,4 +52,4 @@ Keep authentic datasets, generated data, model binaries and secrets outside Git.
 
 See the [user-reported approval record](approval/T-01_instructor_approval.md#user-reported-instructor-approval) and [existing-schema state](planning/approval_state_v2_2.json). No additional conditions have been reported; this does not prove none were given. The state-machine gate passes on the explicitly attributed evidence reference under the existing validator, with independent authentication still outstanding.
 
-The concept brief is prepared, but submission of this particular document to the instructor remains unverified and needs the owner's confirmation. T-03 still requires T-02 completion as well as approval; no T-02/T-03 or other implementation is authorized or started by this brief. The Master Plan/ledger remain unchanged snapshots, including their historical pending-status language.
+The concept brief is prepared and, as confirmed by the team leader, has not been separately submitted. Sending the original proposal is user-reported; whether it satisfies the canonical “Brief submitted” criterion remains pending confirmation of its content/equivalence, not confirmation that this later file was submitted. T-03 still requires T-02 completion as well as approval; no T-02/T-03 or other implementation is authorized or started by this brief. The Master Plan/ledger remain unchanged snapshots, including their historical pending-status language.
