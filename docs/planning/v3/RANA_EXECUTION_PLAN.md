@@ -1,6 +1,6 @@
-# Rana Execution Plan — Proposed V3
+# Rana Execution Plan — V3
 
-**Owner:** Rana Ibrahim Abdel Fattah Mohammad. **Workstream:** dashboard UI and data visualization. **Status:** proposal only; begin only after team-lead/instructor V3 scope confirmation and V3-01 contract kickoff.** You build Jinja2/HTML/Bootstrap/Plotly templates and static assets. You do not own SQL, FastAPI routes, or ML models. Read [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md) and [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md).
+**Owner:** Rana Ibrahim Abdel Fattah Mohammad. **Workstream:** dashboard UI and data visualization. **Status:** official V3 planning baseline; implementation remains gated on V3-01 acceptance and team-lead coordination. Instructor approval is team-leader-reported, without written evidence.** You build Jinja2/HTML/Bootstrap/Plotly templates and static assets. You do not own SQL, FastAPI routes, or ML models. Read [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md) and [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md).
 
 ## What you deliver
 

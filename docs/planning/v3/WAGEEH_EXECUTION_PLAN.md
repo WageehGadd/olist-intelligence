@@ -1,6 +1,6 @@
-# Wageeh Execution Plan — Proposed V3
+# Wageeh Execution Plan — V3
 
-**Owner:** Wageeh Hussain Wageeh (Team Leader). **Status:** proposal only; no implementation is authorized. Wait until the team lead and instructor confirm the revised V3 scope and V3-01 is complete. Follow the [Master Plan](MASTER_EXECUTION_PLAN_V3.md), [Shared Contracts](SHARED_CONTRACTS.md), and [Transition Plan](V2_TO_V3_TRANSITION_PLAN.md). Your workstream is delivery ML, a small MLP comparison, FastAPI backend, and final integration. Do not take over SQL ownership (Hamza), cleaning/EDA (Hasnaa), or UI templates (Rana).
+**Owner:** Wageeh Hussain Wageeh (Team Leader). **Status:** official V3 planning baseline; implementation remains gated on V3-01 acceptance and team-lead coordination. Instructor approval is team-leader-reported, without written evidence. Follow the [Master Plan](MASTER_EXECUTION_PLAN_V3.md), [Shared Contracts](SHARED_CONTRACTS.md), and [Transition Plan](V2_TO_V3_TRANSITION_PLAN.md). Your workstream is delivery ML, a small MLP comparison, FastAPI backend, and final integration. Do not take over SQL ownership (Hamza), cleaning/EDA (Hasnaa), or UI templates (Rana).
 
 ## Start conditions and independent work
 
@@ -14,15 +14,16 @@ Review instructor/team-lead approval status before any technical work. Confirm o
 
 ### V3-06 — Target and eligible population (5h)
 
-Use orders at one row per `order_id`. Read the T-00 final audit and especially temporal quality and delivery target findings before coding. Preserve delivered-only eligibility, non-null purchase/estimated/actual dates, and valid chronology (actual delivery not before purchase). Compare normalized calendar dates; late means actual calendar date strictly after the estimated calendar date. Do not switch to timestamp lateness or a 30-day threshold. Write exclusion reason counts for non-delivered, missing dates, and chronology failures. T-00's 96,470/6,534 is a reconciliation point, not a value to hard-code; explain any changed counts. Proposed files: `src/ml/build_delivery_population.py`, `docs/ml/target_definition.md`, generated ignored `data/processed/delivery_population.csv`.
+Use orders at one row per `order_id`. Read the T-00 final audit and especially temporal quality and delivery target findings before coding. Preserve delivered-only eligibility and valid required timestamps. For the delivery-delay target population, exclude an order if its estimated delivery calendar date is earlier than its purchase calendar date or its actual delivery calendar date is earlier than its purchase calendar date. This exclusion is limited to the delivery-delay analytical population; it does not filter unrelated commercial KPIs. Compare normalized calendar dates; late means actual calendar date strictly after the estimated calendar date. Do not switch to timestamp lateness or a 30-day threshold. Write exclusion reason counts in `docs/ml/target_definition.md`. T-00's 96,470/6,534 is a reconciliation point, not a value to hard-code; explain any changed counts. Proposed files: `src/ml/build_delivery_population.py`, `docs/ml/target_definition.md`, generated ignored `data/processed/delivery_population.csv`.
 
 Example logic (illustrative only):
 
 ```python
-actual_day = pd.to_datetime(orders["order_delivered_customer_date"]).dt.date
-promise_day = pd.to_datetime(orders["order_estimated_delivery_date"]).dt.date
-purchase = pd.to_datetime(orders["order_purchase_timestamp"])
-eligible = delivered & actual_day.notna() & promise_day.notna() & (actual >= purchase)
+purchase_day = pd.to_datetime(orders["order_purchase_timestamp"], errors="coerce").dt.date
+promise_day = pd.to_datetime(orders["order_estimated_delivery_date"], errors="coerce").dt.date
+actual_day = pd.to_datetime(orders["order_delivered_customer_date"], errors="coerce").dt.date
+eligible = (delivered & purchase_day.notna() & promise_day.notna() & actual_day.notna()
+            & (promise_day >= purchase_day) & (actual_day >= purchase_day))
 late = (actual_day[eligible] > promise_day[eligible]).astype("int8")
 ```
 

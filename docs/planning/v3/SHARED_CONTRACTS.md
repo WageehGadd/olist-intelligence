@@ -1,6 +1,6 @@
 # V3 Shared Contracts
 
-**Status: proposed; freeze only after the V3 scope gate and V3-01 kickoff.** This document is the canonical interface agreement for V3. It does not authorize implementation. Master plan: [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md).
+**Status: V3 contract review draft; formal freeze pending V3-01 acceptance and owner acknowledgements.** This is the canonical interface document for V3. The team-lead-approved target-population rule is incorporated, but implementation is not authorized. Master plan: [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md). See [`V3-01_CONTRACT_FREEZE_AND_KICKOFF.md`](V3-01_CONTRACT_FREEZE_AND_KICKOFF.md).
 
 ## 1. Data sources, grains, and joins
 
@@ -72,7 +72,7 @@ These examples use invented counts and category labels. They are schema examples
 
 ### `data/processed/delivery_population.csv` (Wageeh)
 
-One row/order, eligible labeled population only. Audit `order_id` may be included for grouping only and dropped from predictive features. Required: `purchase_ts`, `estimated_delivery_date`, `delivered_date`, `late` (integer 0/1), `exclusion_reason` in the companion count report, and `population_version`. The labeled output should not be exposed as a prediction input.
+One row/order, eligible labeled population only. Audit `order_id` may be included for grouping only and dropped from predictive features. Required columns: `purchase_ts`, `estimated_delivery_date`, `delivered_date`, `late` (integer 0/1), and `population_version`. `exclusion_reason` is not a column in this eligible-only file; V3-06 records excluded-row counts by reason in `docs/ml/target_definition.md`. For the delivery-delay KPI and ML target population, exclude an order if its estimated delivery calendar date is earlier than its purchase calendar date or its actual delivery calendar date is earlier than its purchase calendar date. Preserve delivered-order eligibility and valid required timestamps. This exclusion applies only to the delivery-delay analytical population, not automatically to unrelated commercial KPIs such as revenue proxies or customer counts. `late=1` only when actual delivery calendar date is strictly later than estimated delivery calendar date. The labeled output should not be exposed as a prediction input.
 
 ## 4. KPI definitions and authoritative owner
 
@@ -87,7 +87,7 @@ Freeze a `definition_version` and exact SQL/pandas expression in V3-01. No KPI m
 | `freight_charged_delivered` | sum item `freight_value` for delivered-order items, item grain | Hamza | Sales; Hasnaa may verify |
 | `delivered_item_value_plus_freight` | sum of the preceding two; item-value proxy, not company revenue/net revenue/profit | Hamza | Overview; others may verify |
 | `category_item_value` | sum item `price` by translated category (`unknown` for missing), delivered-order population | Hamza | Sales; Hasnaa's category item-count chart is a different measure |
-| `delay_rate_calendar` | numerator / denominator among eligible delivered orders: actual calendar date strictly later than promised calendar date; valid chronology and both dates required | **Hamza** | Delivery; Wageeh independently verifies against V3-06 target labels |
+| `delay_rate_calendar` | numerator / denominator among delivered orders with valid required timestamps, estimated calendar date on or after purchase calendar date, and actual calendar date on or after purchase calendar date; numerator: actual calendar date strictly later than estimated calendar date | **Hamza** | Delivery; Wageeh independently verifies against V3-06 target labels |
 | `eligible_late_orders` | numerator count for `delay_rate_calendar` | **Hamza** | Delivery; Wageeh independently verifies |
 
 Only Hamza publishes these authoritative shared KPI values. Wageeh's V3-06 label builder is an independent implementation used for reconciliation, not the dashboard source of truth. Hasnaa may check a sample or totals but must not publish a competing `delay_rate_calendar` value. For monthly rows, `period` is purchase month and applies to both numerator and denominator.
@@ -96,7 +96,7 @@ Date filters are inclusive-start/exclusive-end ISO dates and apply consistently 
 
 ## 5. Delivery prediction contract
 
-Target: eligible delivered order with non-null purchase, actual delivery and estimated promise, actual delivery not before purchase; `late=1` iff normalized actual calendar date is strictly later than normalized estimated calendar date. Timezone and original-promise version are unknown caveats. T-00 observed 96,470 eligible and 6,534 late; the project's actual reproduced counts must be reported and reconciled, not hard-coded.
+Target: delivered orders with valid required timestamps, estimated delivery calendar date on or after purchase calendar date, and actual delivery calendar date on or after purchase calendar date. This exclusion is specific to the delivery-delay KPI and ML target population; unrelated commercial KPIs such as revenue proxies and customer counts retain their own documented populations. `late=1` iff normalized actual calendar date is strictly later than normalized estimated calendar date. Timezone and original-promise version are unknown caveats. T-00 observed 96,470 eligible and 6,534 late; the project's actual reproduced counts must be reported and reconciled, not hard-coded.
 
 Prediction moment is order creation. The frozen minimal request schema is:
 
