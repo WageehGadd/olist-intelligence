@@ -1,12 +1,12 @@
 # V2.2 to V3 Transition Plan
 
-**Status: proposal only.** V2.2 and its history remain intact. V3 is not an approved replacement baseline until team-lead review and instructor confirmation of revised scope. This document does not authorize code work, repository publication, team notification, or changes to current task records.
+**Status: local transition preparation; proposal pending review.** V2.2 and its history remain intact and are the current recorded baseline until the transition is reviewed and merged. The team leader reports that the instructor approved the simplified V3 scope; no written evidence or date has been supplied, and this report is not independently verified here. The V3-01 contract freeze and implementation kickoff have not occurred. This document does not authorize code work, publication, team notification, or implementation-task status changes.
 
-## 1. Verified current repository state
+## 1. Local repository snapshot and verification limits
 
-At review, the local fresh clone was `/private/tmp/olist-intelligence-v3`, repository remote `https://github.com/WageehGadd/olist-intelligence.git`. `main` was clean at `636ed34`, the merge commit for PR #1. The clone exposed `origin/main` and historical `origin/feature/T-01-instructor-approval`; no T-02 branch was listed. The clone succeeded and therefore supplied a snapshot, but an explicit later `git ls-remote`/fetch failed because GitHub DNS was unavailable. The remote was not independently rechecked after clone. Do not treat this as proof that no remote work has appeared since that snapshot.
+At transition preparation, the local checkout was `/private/tmp/olist-intelligence-v3`, with `HEAD` at `11beba207ae1f942dd8b23b2ceeaf1fe3853cb1e` on `planning/v3-simplified-master-plan`; local `main`/`origin/main` refs were at `636ed34`. GitHub DNS resolution failed during this execution, so no fetch, `ls-remote`, or current remote verification was possible. PR #2's current base/status/diff, current `origin/main`, and current remote branches are therefore **not independently verified**. Do not treat local refs as current remote state.
 
-Tracked `main` includes the T-00 audit package, V2.2 planning package and the T-01 approval documentation. No project application source/DB/model was observed in this clone. This planning proposal currently adds only seven Markdown files under `docs/planning/v3/` on local branch `planning/v3-simplified-master-plan`; it does not change README, V2.2, ledger, tests, validators, source code, or approval records.
+The local snapshot contains the T-00 audit package, V2.2 planning package and T-01 approval documentation. No project application source/DB/model was observed. The seven V3 planning documents are present at the proposal commit. Transition preparation now adds this attributed status record, a versioned V3 task ledger, and a README pointer on a separate local branch; no V2.2 record, approval state, application source, test, or validator is changed.
 
 ## 2. Historical status: T-00, T-01, T-02
 
@@ -20,9 +20,9 @@ PR #1 was merged to `main`; the main history includes the T-01 base and follow-u
 
 ### T-02
 
-The canonical V2.2 ledger in `main` still says T-02 Planned and assigns Hamza T-00 integration/CI foundation. The observed clone had no `feature/T-02-*` branch. **Actual T-02 progress remains unknown**: a ledger status and one branch snapshot cannot prove the presence or absence of unpushed local work, a newly created remote branch, a draft PR, or work outside Git. The network could not refresh GitHub after clone. Do not describe T-02 as started, abandoned, complete, or definitely unstarted.
+The canonical V2.2 ledger remains unchanged: it says T-02 Planned and assigns Hamza T-00 integration/CI foundation. The team leader reports that Hamza did not start T-02 and that no completed implementation is reported. This is attributed team-leader information, not independently inspected evidence. The local snapshot showed no `feature/T-02-*` branch, but current remote branches, PRs, other workspaces, and unpushed work could not be checked because GitHub was unavailable. Do not claim independent verification or alter the historical V2.2 status. Once V3 is formally adopted, this transition record will identify T-02 as **`Not Started — Superseded by V3`** on the basis of that report; until then, T-02 remains shown as Planned in the historical ledger.
 
-Before the transition decision, ask Hamza to identify every T-02 workspace and provide its branch/ref, `git status`, latest commit, staged/unstaged/untracked file list, and any open/draft PR or CI run. When remote access is available, fetch latest `origin/main`, enumerate remote T-02 branches and PRs, and compare commit ancestry/files. Preserve any local work by keeping its workspace/ref unchanged and making a separate backup or review branch only with the owner's agreement. Review each artifact against the original T-02 acceptance criteria (audit source/reports/tests integrated by PR, Tier A fixture-only CI, raw/full-data tests kept out of Tier A, ignore rules, green CI). Mark each criterion verified/pending/not verified with evidence. Then the team lead and instructor decide whether compatible work is reusable under V3, whether remaining T-02 governance must be closed/superseded, and how history is recorded. Never delete, reset, force-push, silently cherry-pick, reassign ownership, or claim completion based only on files existing.
+The team leader's report is the current stated provenance for T-02 not-started status; it is not remote/workspace verification. Before merging the transition, when connectivity is restored, inspect latest `origin/main`, remote T-02 branches and PRs, and any owner-identified workspace. Preserve any discovered work and compare it to original T-02 acceptance criteria (audit source/reports/tests integrated by PR, Tier A fixture-only CI, raw/full-data tests kept out of Tier A, ignore rules, green CI). Record evidence and reconcile any conflict with the team leader before merge. Once V3 is adopted by an approved and merged transition, record T-02 in this transition record as **`Not Started — Superseded by V3`**, explicitly attributed to the team-leader report; retain the V2.2 ledger's historical `Planned` value unchanged. Never delete, reset, force-push, silently cherry-pick, or claim independent verification based only on the report or branch listing.
 
 ## 3. Reuse and preservation
 
@@ -35,8 +35,8 @@ This is a proposal mapping, not a ledger mutation. V2.2 task IDs are not reused;
 | V2.2 area/task | V3 treatment |
 |---|---|
 | T-00 Dataset audit | Completed historical prerequisite; preserve and reuse findings |
-| T-01 Concept brief/approval | Historical approval record remains; new reduced V3 scope needs fresh confirmation |
-| T-02 T-00 integration/CI | Still shown Planned in V2.2; reconcile Hamza's actual work before deciding replacement |
+| T-01 Concept brief/approval | Preserve historical V2.2 record; V3 scope approval is separately reported by the team leader and is not inferred from T-01 |
+| T-02 T-00 integration/CI | V2.2 ledger stays Planned as historical record; team leader reports not started. Upon adoption, this transition record will state `Not Started — Superseded by V3`; remote/workspace status still needs verification when available |
 | T-03 schema/contracts | Consolidated into V3-01 contract freeze and V3-02 SQLite schema |
 | T-04 ETL | Removed as complex pipeline; simple local CSV cleaning/loading in V3-02/04 |
 | T-05 through T-09 SQL/RFM/geographic analytics | Core KPIs consolidated into V3-03; RFM/geographic extras removed |
@@ -48,17 +48,17 @@ This is a proposal mapping, not a ledger mutation. V2.2 task IDs are not reused;
 
 ## 5. Existing branches, PRs, and conflict handling
 
-Do not reset, delete, force-push, or merge any branch. The locally visible T-01 branch is historical and PR #1 is already merged. T-02 work is unknown beyond the clone evidence; ask its owner, then verify latest `origin/main`, branches, open PRs, and local work before transition. If V2.2 task work exists, preserve its branch and PR and decide whether to finish, close with rationale, or adapt via a new branch only after team lead/instructor approval. Never transplant code silently. Check for README, task ledger, approval-state and contract conflicts; keep V3 documents isolated until approved.
+Do not reset, delete, force-push, or merge any branch. The locally visible T-01 branch is historical and PR #1 is merged in the local snapshot. The team leader reports that T-02 was not started; remote branches/open PRs and other workspaces remain unverified here. When connectivity is restored, verify latest `origin/main`, PR #2, branches and any T-02 work before transition merge. Preserve any discovered V2.2 task work and decide its disposition only with the owner/team lead; never transplant code silently. This local prep proposes only an additive V3 ledger, provenance/status changes in this V3 transition record, and README navigation. Do not alter V2.2 task/approval records or contracts.
 
-## 6. Communicating revised scope
+## 6. Approval provenance
 
-After the team lead reviews the proposal, send the complete version to the instructor through the team's normal channel and request explicit confirmation that the reduced deliverables satisfy DEPI Project #7. Record the actual date, channel/evidence type, instructor response and any conditions only when supplied. Do not infer approval from the earlier verbal approval, silence, or PR merge. The original proposal's contents and exact sent date are not preserved here; do not claim the new V3 plan is the submitted proposal.
+The team leader reports that the instructor approved the reduced V3 scope. Record this only as **team-leader-reported instructor approval**; no written evidence, date, instructor identity, or independent confirmation has been supplied. Do not use V2.2's approval record as evidence for V3, and do not claim that this V3 plan was submitted to the instructor. If additional evidence or conditions are later supplied, append their provenance accurately without overwriting this report. The seven-document plan is accepted by the team leader for transition preparation, subject to review/merge and contract kickoff.
 
 ## 7. Approval checklist
 
 ### Team lead
 
-- [ ] Read all seven V3 documents and verify task IDs, assignment, scope, effort, interfaces and gates.
+- [ ] Complete formal review of the transition package, including task IDs, assignments, scope, effort, interfaces and gates. The team leader accepted the seven-document plan for transition preparation; this does not constitute transition approval/merge.
 - [ ] Confirm Wageeh can support 12.5h/week for a four-week stretch or about 10h/week over the provisional five-week schedule; otherwise extend the target.
 - [ ] Confirm four team members agree their responsibilities and time assumptions.
 - [ ] Resolve dependencies and ensure no T-02 work is discarded.
@@ -68,24 +68,24 @@ After the team lead reviews the proposal, send the complete version to the instr
 
 ### Instructor
 
-- [ ] Explicitly confirm that SQL analytics + cleaning/EDA + delivery ML/MLP + FastAPI/Jinja2 fulfills course requirements.
-- [ ] Confirm removal of review NLP, CNN/BERT, React, deployment and advanced modules is acceptable.
-- [ ] Provide any conditions and evidence of acceptance; record accurately.
+- [x] Scope approval for SQL analytics + cleaning/EDA + delivery ML/MLP + FastAPI/Jinja2 is reported by the team leader; no written evidence is supplied and this has not been independently verified here.
+- [x] The same team-leader report describes approval of the simplified scope, including its reductions from V2.2; no separate written confirmation of individual removed modules is supplied.
+- [ ] Record any additional instructor conditions/evidence if they are supplied later; do not invent details or use V2.2 approval as V3 evidence.
 
 Until these gates are met, all V3 tasks remain **Not authorized / blocked**. Existing V2.2 state does not automatically unlock V3 implementation.
 
 ## 8. Exact pre-implementation sequence
 
-1. Retain this proposal as local, uncommitted planning review material; do not publish/notify/invite.
-2. Wageeh reviews all seven documents; team members may review their own plans when coordinated.
-3. Contact Hamza to establish actual T-02 state and preserve any work; inspect latest remote state after network is available.
-4. Request instructor confirmation of the changed/reduced V3 scope. Record only the response and evidence actually received.
-5. Resolve the capacity, license/privacy, Python/DL framework, GitHub rules, and KPI open decisions.
-6. If scope is approved, create a separately reviewed transition PR with explicit V2.2-to-V3 baseline decision; do not edit historical V2.2 files in place. Update official source pointers and task ledger only under separate authorization and with verified consistency.
-7. Obtain team-lead approval of the transition PR and complete any required instructor conditions. Merge only after the user's separate publication/merge authorization.
-8. Re-verify latest `main`, status, remote branches, and owner acknowledgements; run V3-01 kickoff and freeze contracts.
-9. Only then notify members that V3 implementation may begin. Start Hamza V3-02, Hasnaa V3-04, Wageeh V3-06, and Rana V3-10 in parallel.
+1. Keep this transition package on its separate local review branch; do not stage, commit, push, create a PR, merge or notify members as part of this preparation.
+2. Review all transition files and the new V3 ledger; reconcile comments without changing V2.2 history.
+3. The team leader's T-02 not-started statement is recorded as attributed provenance. When connectivity returns, inspect latest remote `main`, PR #2 and T-02 refs/PRs; reconcile any conflicting evidence before transition review/merge.
+4. Record the V3 instructor approval only as team-leader-reported; add no date, identity, signature, written evidence or submission claim unless supplied.
+5. Resolve the remaining capacity, license/privacy, Python/DL framework, GitHub rules and KPI decisions.
+6. Submit a separate transition PR only after current remote state and PR #2 are verified. Include the V2.2-to-V3 baseline decision and versioned ledger; do not edit historical V2.2 files in place.
+7. Obtain explicit team-lead review and the user's separate authorization for publication/merge. Merge only after the transition review is complete.
+8. After merge, re-verify latest `main`, PR/branch status, T-02 evidence and owner acknowledgements. Then run V3-01 contract freeze and kickoff; neither is complete in this preparation.
+9. Only after V3-01 contract freeze/kickoff is completed and explicit coordination may members begin V3 implementation tasks.
 
 ## 9. What must not change before approval
 
-Do not alter V2.2 Master Plan, canonical Task Ledger, approvals, T-00 audits, validators, tests, README or source code. Do not mark any V3 task started/completed, repurpose T-02, announce revised work as instructor-approved, or treat this branch as published. No implementation, data import, training, app development, installation, commit, push, merge, PR, collaborator invitation, or permissions change is authorized by this proposal.
+Do not alter the V2.2 Master Plan, canonical Task Ledger, approval records, T-00 audits, validators, tests, or application source. The README change in this local branch is only a conditional pointer to the proposed successor and explicitly keeps V2.2 current until transition approval/merge; it does not activate V3. Do not mark V3 tasks started/completed, change historical T-02 status, present the team-leader report as independently verified evidence, notify members to begin work, or treat this local branch as published. No implementation, data import, training, app development, installation, commit, push, merge, collaborator invitation, or permissions change is authorized by this preparation.
