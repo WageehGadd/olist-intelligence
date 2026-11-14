@@ -1,6 +1,6 @@
-# Hasnaa Execution Plan — Proposed V3
+# Hasnaa Execution Plan — V3
 
-**Owner:** Hasnaa Mohamed Mohamed Darwish. **Workstream:** data cleaning, preprocessing and EDA. **Status:** proposal only; wait for documented team-lead and instructor confirmation of the reduced V3 scope and V3-01 kickoff.** Read [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md) and the relevant raw-data and output sections of [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md). You work independently from the original CSVs and do not wait for Hamza's SQL database. You do not own the ML model, SQL schema, or FastAPI.
+**Owner:** Hasnaa Mohamed Mohamed Darwish. **Workstream:** data cleaning, preprocessing and EDA. **Status:** official V3 planning baseline; V3-01 is completed, but implementation requires Hasnaa's local setup check and separate team-lead task-start coordination. Instructor approval is team-leader-reported, without written evidence.** Read [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md), the relevant raw-data and output sections of [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md), and the per-member pre-start checks in [`V3-01_CONTRACT_FREEZE_AND_KICKOFF.md`](V3-01_CONTRACT_FREEZE_AND_KICKOFF.md). You work independently from the original CSVs and do not wait for Hamza's SQL database. You do not own the ML model, SQL schema, or FastAPI.
 
 ## Your tasks and estimated workload
 
@@ -66,7 +66,7 @@ Acceptance: selected plots have correct grain/denominators/labels; each finding 
 
 | Required input/dependency | Owner | Classification/start rule | Exact output/receiver | Fallback and verification |
 |---|---|---|---|---|
-| V3 scope approval and shared schema | Team lead/instructor; V3-01 by Wageeh | Hard gate before implementation | Agreed output columns/types | No work before gate; freeze version at kickoff |
+| V3 scope approval and shared schema | V3 scope approval is team-leader-reported; V3-01 by Wageeh | Hard gate before implementation | Agreed output columns/types | No work before V3-01 acceptance; freeze version at kickoff |
 | Original local CSVs | Dataset owner obtains separately | No external teammate dependency | Clean order/item outputs | Missing files are a blocker; do not fetch/share unlicensed copy |
 | Hamza SQL schema/database | Hamza | No dependency for V3-04/05; optional integration comparison | Reconciliation notes to Hamza | Continue with direct CSV; compare at V3-14 |
 | Hamza authoritative KPI | Hamza V3-03 | Not a dependency for your chart outputs; reconciliation only | Optional validation of rate totals; do not publish a second KPI | Compare privately and report discrepancy to Hamza/Wageeh |

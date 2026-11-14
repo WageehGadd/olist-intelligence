@@ -1,6 +1,6 @@
-# Hamza Execution Plan — Proposed V3
+# Hamza Execution Plan — V3
 
-**Owner:** Hamza Ayman Saad Eid. **Workstream:** SQLite and business analytics. **Status:** proposal only; wait for team-lead and instructor confirmation of V3 scope and completion of V3-01.** Follow [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md) and [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md). Your work can start directly from original Olist CSV files after approval; you do not wait for Hasnaa's cleaning work. You do not own FastAPI, ML, or frontend.
+**Owner:** Hamza Ayman Saad Eid. **Workstream:** SQLite and business analytics. **Status:** official V3 planning baseline; V3-01 is completed, but implementation requires Hamza's local setup check and separate team-lead task-start coordination. Instructor approval is team-leader-reported, without written evidence.** Follow [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md), [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md), and the per-member pre-start checks in [`V3-01_CONTRACT_FREEZE_AND_KICKOFF.md`](V3-01_CONTRACT_FREEZE_AND_KICKOFF.md). Your work can start directly from original Olist CSV files after the start gate; you do not wait for Hasnaa's cleaning work. You do not own FastAPI, ML, or frontend.
 
 ## What you deliver
 
@@ -57,7 +57,7 @@ Paths: `src/sql/schema.sql`, `src/sql/load_sqlite.py`, local ignored DB, `docs/s
 
 ### KPI work
 
-Implement the definitions in the shared contract. You are the **sole authoritative owner of every shared dashboard KPI**, including `delay_rate_calendar` and `eligible_late_orders`. Wageeh's independently built V3-06 label is a reconciliation check only; Hasnaa may verify totals but must not publish a competing shared rate. Minimum measures:
+Implement the definitions in the shared contract. You are the **sole authoritative owner of every shared dashboard KPI**, including `delay_rate_calendar` and `eligible_late_orders`. For the delivery-delay KPI population only, exclude delivered orders whose estimated delivery calendar date is earlier than the purchase calendar date; also preserve valid required timestamps, delivered-order eligibility, and actual calendar date not before purchase. The late numerator is actual calendar date strictly later than estimated calendar date. This exclusion does not filter unrelated commercial KPIs such as revenue proxies or customer counts. Wageeh's independently built V3-06 label is a reconciliation check only; Hasnaa may verify totals but must not publish a competing shared rate. Minimum measures:
 
 - Distinct source orders by month and overall.
 - Unique people counted by `customer_unique_id` within the selected order population.
@@ -108,7 +108,7 @@ Acceptance: measures have reproducible SQL, accurate grain/filter labels, child-
 
 | Dependency | Details |
 |---|---|
-| Start gate | Team lead and instructor must confirm the revised scope; V3-01 freezes SQL/KPI contracts. |
+| Start gate | V3 scope approval is team-leader-reported; wait for V3-01 contract acceptance and team-lead coordination before implementation. |
 | Raw input | Original local Olist CSVs; you read them directly, independent of Hasnaa. |
 | Receiver | Wageeh's V3-12/14 and Rana's V3-11/14 consume KPI outputs. |
 | Exact handoff | Schema/version, query path, generation command, KPI names/values/units/period/denominator, tests and caveats. |
