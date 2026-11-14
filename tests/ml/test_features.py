@@ -168,6 +168,15 @@ def test_historical_builder_audits_unrepresentable_empty_cart_without_imputation
     assert audit["feature_ready_late"] + audit["feature_excluded_late"] == audit["population_input_late"]
 
 
+@pytest.mark.parametrize("item_id", [None, float("nan"), pd.NA, "", "   "])
+def test_historical_builder_rejects_missing_or_blank_item_grain_key(item_id):
+    population, orders, items, customers = _historical_fixture()
+    items["order_item_id"] = items["order_item_id"].astype(object)
+    items.loc[0, "order_item_id"] = item_id
+    with pytest.raises(ValueError, match="order_item_id must be present and nonblank"):
+        build_historical_features(population, orders, items, customers)
+
+
 def test_historical_builder_rejects_duplicate_item_grain_and_target_mismatch():
     population, orders, items, customers = _historical_fixture()
     duplicate = pd.concat([items, items.iloc[[0]]], ignore_index=True)

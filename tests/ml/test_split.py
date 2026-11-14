@@ -24,6 +24,29 @@ def _row(order_id, purchase_ts, late=0, hour=10, state="SP"):
     }
 
 
+def _valid_audit(frame, checksum="a" * 64):
+    rows = len(frame)
+    positives = int(frame["late"].sum())
+    negatives = rows - positives
+    return {
+        "population_input_rows": rows,
+        "population_input_late": positives,
+        "feature_ready_rows": rows,
+        "feature_ready_late": positives,
+        "feature_ready_negative_rows": negatives,
+        "feature_excluded_rows": 0,
+        "feature_excluded_late": 0,
+        "exclusive_feature_exclusion_counts": {},
+        "input_target_label_counts": {"late_1": positives, "late_0": negatives},
+        "feature_ready_label_counts": {"late_1": positives, "late_0": negatives},
+        "feature_artifact_sha256": checksum,
+        "source_population_monthly": {
+            "2018-08": {"source_orders": 10, "delivered_status_orders": 9, "v3_06_eligible": 8},
+            "2018-09": {"source_orders": 2, "delivered_status_orders": 0, "v3_06_eligible": 0},
+        },
+    }
+
+
 def _frame():
     return pd.DataFrame([
         _row("old", "2016-12-31 23:59:59", 1),
@@ -111,26 +134,20 @@ def test_split_generator_output_paths_cannot_overwrite_inputs_or_leave_processed
 
 def test_split_manifest_counts_and_train_only_fit_are_reproducible():
     frame = _frame().loc[lambda x: ~x.order_id.isin(["old", "new"])].reset_index(drop=True)
-    audit = {
-        "population_input_rows": len(frame),
-        "population_input_late": int(frame.late.sum()),
-        "exclusive_feature_exclusion_counts": {},
-        "feature_ready_late": int(frame.late.sum()),
-        "source_population_monthly": {
-            "2018-08": {"source_orders": 10, "delivered_status_orders": 9, "v3_06_eligible": 8},
-            "2018-09": {"source_orders": 2, "delivered_status_orders": 0, "v3_06_eligible": 0},
-        },
-    }
+    checksum = "a" * 64
+    audit = _valid_audit(frame, checksum)
     split, manifest, preprocessor = build_split_outputs(
         frame,
         audit,
-        "abc123",
+        checksum,
         "input.csv",
         "splits.csv",
         "manifest.json",
         "preprocessor.joblib",
     )
     assert len(split) == len(frame)
+    assert manifest["dataset"]["feature_artifact_sha256"] == checksum
+    assert manifest["dataset"]["feature_ready_negative_rows"] == 3
     assert manifest["counts_and_label_distribution"]["train"]["rows"] == 2
     assert manifest["counts_and_label_distribution"]["validation"]["rows"] == 2
     assert manifest["counts_and_label_distribution"]["test"]["rows"] == 2
@@ -139,3 +156,77 @@ def test_split_manifest_counts_and_train_only_fit_are_reproducible():
     assert manifest["preprocessing"]["estimator_trained"] is False
     assert manifest["maturity_assessment"]["raw_monthly_tail"]["2018-09"]["source_orders"] == 2
     assert preprocessor.named_transformers_["numeric"].named_steps["scaler"].mean_[0] == 1.0
+
+
+def _assert_audit_rejected_before_outputs(frame, audit, tmp_path, expected):
+    checksum = "a" * 64
+    outputs = [tmp_path / "splits.csv", tmp_path / "manifest.json", tmp_path / "preprocessor.joblib"]
+    with pytest.raises(ValueError, match=expected):
+        build_split_outputs(
+            frame,
+            audit,
+            checksum,
+            "input.csv",
+            str(outputs[0]),
+            str(outputs[1]),
+            str(outputs[2]),
+        )
+    assert all(not output.exists() for output in outputs)
+
+
+def test_stale_feature_ready_row_count_rejected_before_outputs(tmp_path):
+    frame = _frame().loc[lambda x: ~x.order_id.isin(["old", "new"])].reset_index(drop=True)
+    audit = _valid_audit(frame)
+    audit["feature_ready_rows"] -= 1
+    _assert_audit_rejected_before_outputs(frame, audit, tmp_path, "feature_ready_rows")
+
+
+def test_wrong_feature_ready_late_count_rejected_before_outputs(tmp_path):
+    frame = _frame().loc[lambda x: ~x.order_id.isin(["old", "new"])].reset_index(drop=True)
+    audit = _valid_audit(frame)
+    audit["feature_ready_late"] -= 1
+    _assert_audit_rejected_before_outputs(frame, audit, tmp_path, "feature_ready_late")
+
+
+def test_inconsistent_target_population_accounting_rejected_before_outputs(tmp_path):
+    frame = _frame().loc[lambda x: ~x.order_id.isin(["old", "new"])].reset_index(drop=True)
+    audit = _valid_audit(frame)
+    audit["population_input_rows"] += 1
+    _assert_audit_rejected_before_outputs(frame, audit, tmp_path, "row accounting")
+
+
+def test_missing_or_noninteger_required_audit_count_rejected_before_outputs(tmp_path):
+    frame = _frame().loc[lambda x: ~x.order_id.isin(["old", "new"])].reset_index(drop=True)
+    missing = _valid_audit(frame)
+    del missing["feature_excluded_rows"]
+    _assert_audit_rejected_before_outputs(frame, missing, tmp_path, "missing required count")
+
+    malformed = _valid_audit(frame)
+    malformed["population_input_rows"] = "6"
+    _assert_audit_rejected_before_outputs(frame, malformed, tmp_path, "nonnegative integer")
+
+
+def test_exclusion_reason_counts_must_reconcile_before_outputs(tmp_path):
+    frame = _frame().loc[lambda x: ~x.order_id.isin(["old", "new"])].reset_index(drop=True)
+    audit = _valid_audit(frame)
+    audit["population_input_rows"] += 1
+    audit["feature_excluded_rows"] += 1
+    _assert_audit_rejected_before_outputs(frame, audit, tmp_path, "exclusion reasons")
+
+
+def test_incorrect_feature_artifact_checksum_rejected_before_outputs(tmp_path):
+    frame = _frame().loc[lambda x: ~x.order_id.isin(["old", "new"])].reset_index(drop=True)
+    audit = _valid_audit(frame, "b" * 64)
+    _assert_audit_rejected_before_outputs(frame, audit, tmp_path, "checksum")
+
+
+def test_invalid_labels_and_duplicate_ids_cannot_bypass_audit_guard(tmp_path):
+    frame = _frame().loc[lambda x: ~x.order_id.isin(["old", "new"])].reset_index(drop=True)
+    checksum = "a" * 64
+    audit = _valid_audit(frame, checksum)
+    invalid_labels = frame.copy()
+    invalid_labels.loc[0, "late"] = 2
+    _assert_audit_rejected_before_outputs(invalid_labels, audit, tmp_path, "only 0 or 1")
+    duplicate_ids = pd.concat([frame, frame.iloc[[0]]], ignore_index=True)
+    duplicate_audit = _valid_audit(duplicate_ids, checksum)
+    _assert_audit_rejected_before_outputs(duplicate_ids, duplicate_audit, tmp_path, "present and unique")

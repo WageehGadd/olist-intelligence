@@ -62,9 +62,9 @@ V3-08/V3-09 consume `delivery_feature_splits.csv`, the frozen boundaries and tra
 All outputs below are ignored by Git; they contain authentic local data and must not be staged or committed:
 
 - `data/processed/delivery_features.csv` — metadata (`order_id`, `purchase_ts`, `late`) plus the exact eight feature columns.
-- `data/processed/delivery_feature_audit.json` — input counts, label reconciliation, exclusive feature exclusions, join/amount diagnostics, missingness and monthly cohort audit.
+- `data/processed/delivery_feature_audit.json` — input counts, label reconciliation, exclusive feature exclusions, join/amount diagnostics, missingness, monthly cohort audit, and SHA-256 of the finalized feature CSV. The split builder checks the audit counts and labels against that CSV and verifies its checksum before preprocessing or output generation.
 - `data/processed/delivery_feature_splits.csv` — the same rows plus a split/exclusion label.
-- `data/processed/delivery_split_manifest.json` — fixed boundaries, populations, prevalence, date ranges, maturity note, checksums and preprocessing record.
+- `data/processed/delivery_split_manifest.json` — fixed boundaries, populations, prevalence, date ranges, maturity note, validated feature-artifact checksum, and preprocessing record.
 - `data/processed/delivery_preprocessor.joblib` — train-fitted transformer only; no estimator or model weights.
 
 Both generators reject output paths outside `data/processed/`, refuse to overwrite their inputs, and require distinct output paths.

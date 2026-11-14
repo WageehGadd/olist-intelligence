@@ -7,6 +7,7 @@ rows and future inference inputs call the same function.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -258,6 +259,10 @@ def build_historical_features(
     orders["customer_id"] = orders["customer_id"].astype("string")
     customers["customer_id"] = _clean_ids(customers["customer_id"], "customers.customer_id")
     items["order_id"] = _clean_ids(items["order_id"], "order_items.order_id")
+    item_ids = items["order_item_id"].astype("string")
+    missing_item_ids = items["order_item_id"].isna() | item_ids.str.strip().eq("").fillna(False)
+    if missing_item_ids.any():
+        raise ValueError("order_items.order_item_id must be present and nonblank")
 
     if population["order_id"].duplicated().any():
         raise ValueError("V3-06 population contains duplicate order_id values")
@@ -399,6 +404,7 @@ def build_historical_features(
         "population_input_late": int(population["late"].astype(int).sum()),
         "feature_ready_rows": int(len(feature_frame)),
         "feature_ready_late": int(feature_frame["late"].sum()) if len(feature_frame) else 0,
+        "feature_ready_negative_rows": int(len(feature_frame) - feature_frame["late"].sum()),
         "feature_excluded_rows": int(len(population) - len(feature_frame)),
         "feature_excluded_late": int(excluded_late),
         "exclusive_feature_exclusion_counts": {reason: int(exclusions[reason]) for reason in reasons},
@@ -488,6 +494,11 @@ def build_from_csv(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     audit_path.parent.mkdir(parents=True, exist_ok=True)
     features.to_csv(output_path, index=False)
+    digest = hashlib.sha256()
+    with output_path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    audit["feature_artifact_sha256"] = digest.hexdigest()
     audit_path.write_text(json.dumps(audit, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return audit
 

@@ -7,6 +7,7 @@ import hashlib
 import json
 import sys
 from datetime import date
+from numbers import Integral
 from pathlib import Path
 from typing import Any
 
@@ -80,6 +81,89 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _audit_count(audit: dict[str, Any], key: str) -> int:
+    if key not in audit:
+        raise ValueError(f"Feature audit is missing required count: {key}")
+    value = audit[key]
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral) or int(value) < 0:
+        raise ValueError(f"Feature audit count {key} must be a nonnegative integer")
+    return int(value)
+
+
+def _validate_feature_audit(
+    features: pd.DataFrame,
+    audit: dict[str, Any],
+    input_sha256: str,
+) -> None:
+    """Bind audit counts and labels to the exact feature artifact being split."""
+    if not isinstance(audit, dict):
+        raise ValueError("Feature audit must be a JSON object")
+
+    count_fields = (
+        "population_input_rows",
+        "population_input_late",
+        "feature_ready_rows",
+        "feature_ready_late",
+        "feature_ready_negative_rows",
+        "feature_excluded_rows",
+        "feature_excluded_late",
+    )
+    counts = {key: _audit_count(audit, key) for key in count_fields}
+    population_rows = counts["population_input_rows"]
+    population_late = counts["population_input_late"]
+    feature_rows = counts["feature_ready_rows"]
+    feature_late = counts["feature_ready_late"]
+    feature_negative = counts["feature_ready_negative_rows"]
+    excluded_rows = counts["feature_excluded_rows"]
+    excluded_late = counts["feature_excluded_late"]
+
+    if population_late > population_rows or feature_late > feature_rows or excluded_late > excluded_rows:
+        raise ValueError("Feature audit label counts exceed their row counts")
+    if feature_rows != len(features):
+        raise ValueError("Feature audit feature_ready_rows does not match the feature artifact row count")
+    labels = pd.to_numeric(features["late"], errors="coerce")
+    if labels.isna().any() or not labels.isin((0, 1)).all():
+        raise ValueError("Feature artifact late labels must contain only 0 or 1")
+    actual_late = int(labels.sum())
+    if feature_late != actual_late:
+        raise ValueError("Feature audit feature_ready_late does not match feature artifact labels")
+    if feature_negative != len(features) - actual_late:
+        raise ValueError("Feature audit feature_ready_negative_rows does not match feature artifact labels")
+    if population_rows != feature_rows + excluded_rows:
+        raise ValueError("Feature audit target-population row accounting is inconsistent")
+    if population_late != feature_late + excluded_late:
+        raise ValueError("Feature audit target-population late-label accounting is inconsistent")
+    if population_rows - population_late != feature_negative + (excluded_rows - excluded_late):
+        raise ValueError("Feature audit target-population negative-label accounting is inconsistent")
+
+    exclusion_counts = audit.get("exclusive_feature_exclusion_counts")
+    if not isinstance(exclusion_counts, dict):
+        raise ValueError("Feature audit is missing required exclusive_feature_exclusion_counts")
+    validated_exclusions = {
+        name: _audit_count(exclusion_counts, name) for name in exclusion_counts
+    }
+    if sum(validated_exclusions.values()) != excluded_rows:
+        raise ValueError("Feature audit exclusion reasons do not sum to feature_excluded_rows")
+
+    for field, expected in (
+        ("input_target_label_counts", (population_late, population_rows - population_late)),
+        ("feature_ready_label_counts", (feature_late, feature_negative)),
+    ):
+        distribution = audit.get(field)
+        if not isinstance(distribution, dict):
+            raise ValueError(f"Feature audit is missing required {field}")
+        positive = _audit_count(distribution, "late_1")
+        negative = _audit_count(distribution, "late_0")
+        if (positive, negative) != expected:
+            raise ValueError(f"Feature audit {field} does not reconcile with row and label counts")
+
+    if not isinstance(input_sha256, str) or len(input_sha256) != 64 or any(c not in "0123456789abcdef" for c in input_sha256):
+        raise ValueError("Feature artifact SHA-256 must be a lowercase 64-character hex digest")
+    recorded_sha256 = audit.get("feature_artifact_sha256")
+    if not isinstance(recorded_sha256, str) or recorded_sha256 != input_sha256:
+        raise ValueError("Feature audit checksum does not match the feature artifact SHA-256")
+
+
 def _repo_relative(path: Path) -> str:
     root = Path(__file__).resolve().parents[2]
     try:
@@ -132,6 +216,7 @@ def build_split_outputs(
     preprocessor_path: str,
 ) -> tuple[pd.DataFrame, dict[str, Any], Any]:
     split_frame = assign_chronological_splits(features)
+    _validate_feature_audit(features, feature_audit, input_sha256)
     train = split_frame.loc[split_frame[SPLIT_COLUMN].eq("train")]
     validation = split_frame.loc[split_frame[SPLIT_COLUMN].eq("validation")]
     test = split_frame.loc[split_frame[SPLIT_COLUMN].eq("test")]
@@ -176,6 +261,8 @@ def build_split_outputs(
             "input_path": input_path,
             "input_sha256": input_sha256,
             "feature_ready_rows": int(len(features)),
+            "feature_ready_negative_rows": int(feature_audit["feature_ready_negative_rows"]),
+            "feature_artifact_sha256": input_sha256,
             "target_population_rows": int(feature_audit["population_input_rows"]),
             "target_population_late": int(feature_audit["population_input_late"]),
             "feature_exclusions": feature_audit["exclusive_feature_exclusion_counts"],
