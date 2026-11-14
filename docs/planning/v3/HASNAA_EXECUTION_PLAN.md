@@ -1,6 +1,6 @@
 # Hasnaa Execution Plan — V3
 
-**Owner:** Hasnaa Mohamed Mohamed Darwish. **Workstream:** data cleaning, preprocessing and EDA. **Status:** official V3 planning baseline; implementation remains gated on V3-01 acceptance and team-lead coordination. Instructor approval is team-leader-reported, without written evidence.** Read [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md) and the relevant raw-data and output sections of [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md). You work independently from the original CSVs and do not wait for Hamza's SQL database. You do not own the ML model, SQL schema, or FastAPI.
+**Owner:** Hasnaa Mohamed Mohamed Darwish. **Workstream:** data cleaning, preprocessing and EDA. **Status:** official V3 planning baseline; V3-01 is completed, but implementation requires Hasnaa's local setup check and separate team-lead task-start coordination. Instructor approval is team-leader-reported, without written evidence.** Read [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md), the relevant raw-data and output sections of [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md), and the per-member pre-start checks in [`V3-01_CONTRACT_FREEZE_AND_KICKOFF.md`](V3-01_CONTRACT_FREEZE_AND_KICKOFF.md). You work independently from the original CSVs and do not wait for Hamza's SQL database. You do not own the ML model, SQL schema, or FastAPI.
 
 ## Your tasks and estimated workload
 

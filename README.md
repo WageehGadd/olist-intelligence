@@ -2,7 +2,7 @@
 
 Explainable E-Commerce Analytics & Predictive Intelligence Platform — DEPI Round 5 Data Scientist graduation project.
 
-**Current planning baseline: V3, present on local `main` at `97f874d974b402b077e57a0361dda485c838adc5` per the verified baseline supplied for this task. V2.2 remains intact as historical record. The team leader reports instructor approval of V3; no written evidence has been supplied, and the report is not independently verified here. V3-01 contract freeze and kickoff remain pending; no implementation task may start before V3-01 acceptance and team-lead coordination.** See the [historical concept brief](docs/concept_brief.md) and [V2.2 approval record](docs/approval/T-01_instructor_approval.md); that record concerns the earlier project concept, not the V3 scope.
+**Current planning baseline: V3, present on local `main` at `97f874d974b402b077e57a0361dda485c838adc5` per the verified baseline supplied for this task. V2.2 remains intact as historical record. The team leader reports instructor approval of V3; no written evidence has been supplied, and the report is not independently verified here. V3-01 and Shared Contracts v1 are recorded complete/frozen by delegated team-lead approval. Teammate dataset/environment checks remain pre-start requirements, and no implementation starts before separate team-lead coordination.** See the [historical concept brief](docs/concept_brief.md) and [V2.2 approval record](docs/approval/T-01_instructor_approval.md); that record concerns the earlier project concept, not the V3 scope.
 
 ## Start here
 
@@ -15,7 +15,7 @@ Explainable E-Commerce Analytics & Predictive Intelligence Platform — DEPI Rou
 
 ## V3 planning baseline
 
-V3 is the active planning baseline represented by the merged transition on `main`. It covers SQL analytics, cleaning/EDA, delivery ML with a small MLP comparison, and one FastAPI/Jinja2 application. V3-01 contract freeze and kickoff are still pending, so this baseline does not itself authorize implementation. The instructor approval status is team-leader-reported, without written evidence. The team leader reports that Hamza did not start historical T-02; the original V2.2 ledger remains `Planned` as a historical record, while the V3 transition record identifies it as superseded based on that report without claiming independent remote/workspace verification.
+V3 is the active planning baseline represented by the merged transition on `main`. It covers SQL analytics, cleaning/EDA, delivery ML with a small MLP comparison, and one FastAPI/Jinja2 application. V3-01 and Shared Contracts v1 are recorded complete/frozen under delegated team-lead approval; this does not authorize an implementation start. The team leader reports instructor approval without written evidence. Hamza, Hasnaa and Rana's local setup remains unverified and must be checked before their first tasks. The team leader reports that Hamza did not start historical T-02; the original V2.2 ledger remains `Planned` as a historical record, while the V3 transition record identifies it as superseded based on that report without claiming independent remote/workspace verification.
 
 - [V3 Master Execution Plan](docs/planning/v3/MASTER_EXECUTION_PLAN_V3.md)
 - [Wageeh execution plan](docs/planning/v3/WAGEEH_EXECUTION_PLAN.md)

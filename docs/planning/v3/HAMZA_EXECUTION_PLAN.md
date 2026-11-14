@@ -1,6 +1,6 @@
 # Hamza Execution Plan — V3
 
-**Owner:** Hamza Ayman Saad Eid. **Workstream:** SQLite and business analytics. **Status:** official V3 planning baseline; implementation remains gated on V3-01 acceptance and team-lead coordination. Instructor approval is team-leader-reported, without written evidence.** Follow [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md) and [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md). Your work can start directly from original Olist CSV files after V3-01; you do not wait for Hasnaa's cleaning work. You do not own FastAPI, ML, or frontend.
+**Owner:** Hamza Ayman Saad Eid. **Workstream:** SQLite and business analytics. **Status:** official V3 planning baseline; V3-01 is completed, but implementation requires Hamza's local setup check and separate team-lead task-start coordination. Instructor approval is team-leader-reported, without written evidence.** Follow [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md), [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md), and the per-member pre-start checks in [`V3-01_CONTRACT_FREEZE_AND_KICKOFF.md`](V3-01_CONTRACT_FREEZE_AND_KICKOFF.md). Your work can start directly from original Olist CSV files after the start gate; you do not wait for Hasnaa's cleaning work. You do not own FastAPI, ML, or frontend.
 
 ## What you deliver
 

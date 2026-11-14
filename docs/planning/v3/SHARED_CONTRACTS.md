@@ -1,6 +1,6 @@
 # V3 Shared Contracts
 
-**Status: V3 contract review draft; formal freeze pending V3-01 acceptance and owner acknowledgements.** This is the canonical interface document for V3. The team-lead-approved target-population rule is incorporated, but implementation is not authorized. Master plan: [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md). See [`V3-01_CONTRACT_FREEZE_AND_KICKOFF.md`](V3-01_CONTRACT_FREEZE_AND_KICKOFF.md).
+**Status: FROZEN — Shared Contracts v1, approved 2026-11-14 by the team leader under the team's reported delegation of planning and contract decisions.** This is the canonical interface document for V3. The three members' plan agreement and delegation are team-leader-reported; this status does not claim individual explicit acknowledgements of the contract text. Teammate-specific dataset/environment checks remain required before their first implementation tasks, and no implementation may start before separate team-lead coordination. Master plan: [`MASTER_EXECUTION_PLAN_V3.md`](MASTER_EXECUTION_PLAN_V3.md). See [`V3-01_CONTRACT_FREEZE_AND_KICKOFF.md`](V3-01_CONTRACT_FREEZE_AND_KICKOFF.md).
 
 ## 1. Data sources, grains, and joins
 

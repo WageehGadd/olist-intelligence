@@ -1,6 +1,6 @@
 # V2.2 to V3 Transition Plan
 
-**Status: V3 is the official planning baseline present on local `main` at `97f874d974b402b077e57a0361dda485c838adc5` per the verified baseline supplied for this task.** V2.2 and its history remain intact. The team leader reports instructor approval of the simplified V3 scope; no written evidence or date has been supplied, and this report is not independently verified here. V3-01 contract freeze and kickoff have not occurred; implementation is not authorized until V3-01 acceptance and team-lead coordination.
+**Status: V3 is the official planning baseline recorded on local `main` at `97f874d974b402b077e57a0361dda485c838adc5` during transition preparation.** V2.2 and its history remain intact. This transition snapshot reported instructor approval and V3-01 as pending at that time. Subsequent team-lead delegated approval and V3-01 completion are recorded in [`V3-01_CONTRACT_FREEZE_AND_KICKOFF.md`](V3-01_CONTRACT_FREEZE_AND_KICKOFF.md), [`SHARED_CONTRACTS.md`](SHARED_CONTRACTS.md), and the V3 ledger. The instructor approval remains team-leader-reported without written evidence or independent verification. Per-member setup checks and team-lead start coordination still gate implementation.
 
 ## 1. Local repository snapshot and verification limits
 
@@ -52,9 +52,11 @@ Do not reset, delete, or force-push any branch. The locally visible T-01 branch 
 
 ## 6. Approval provenance
 
-The team leader reports that the instructor approved the reduced V3 scope. Record this only as **team-leader-reported instructor approval**; no written evidence, date, instructor identity, or independent confirmation has been supplied. Do not use V2.2's approval record as evidence for V3, and do not claim that this V3 plan was submitted to the instructor. If additional evidence or conditions are later supplied, append their provenance accurately without overwriting this report. The V3 planning package is present on the supplied verified `main` baseline; V3-01 contract kickoff remains pending.
+The team leader reports that the instructor approved the reduced V3 scope. Record this only as **team-leader-reported instructor approval**; no written evidence, date, instructor identity, or independent confirmation has been supplied. Do not use V2.2's approval record as evidence for V3, and do not claim that this V3 plan was submitted to the instructor. If additional evidence or conditions are later supplied, append their provenance accurately without overwriting this report. The V3 planning package is present on the supplied verified `main` baseline; at transition time, V3-01 contract kickoff remained pending. Its later completion is recorded in the linked kickoff record.
 
 ## 7. Approval checklist
+
+This checklist records the transition-preparation state. The later V3-01 closure record supersedes its pending status; per-member setup checks remain pre-start gates.
 
 ### Team lead
 
@@ -77,10 +79,10 @@ V3 scope approval is recorded only as team-leader-reported. The V3 planning base
 
 1. Treat the supplied verified `main` baseline as the V3 planning baseline; this execution did not query the live remote.
 2. Preserve V2.2 documents and its canonical ledger unchanged. T-02 remains `Planned` there for historical traceability; this transition document records its reported supersession with provenance limitations.
-3. Apply the approved delivery-delay population rule consistently; confirm the four owners acknowledge the same contract version.
-4. Verify local setup assumptions, available Python/dependency versions, data access, coordination cadence and GitHub rules without installing packages or changing settings.
-5. Complete V3-01 review and record team-lead acceptance. Only then may the team lead coordinate first implementation starts according to the dependency ledger.
+3. Apply the approved delivery-delay population rule consistently. The team leader subsequently approved Shared Contracts v1 under reported delegation; do not claim individual explicit contract-text approvals.
+4. Verify local setup assumptions, Python/dependencies and data access for each member before that member's first task; record actual results without installing packages or changing settings without authorization.
+5. V3-01 is completed as recorded in the kickoff record and ledger. The team lead must separately coordinate each implementation start according to the dependency ledger.
 
 ## 9. What must not change before approval
 
-Do not alter the V2.2 Master Plan, canonical Task Ledger, approval records, T-00 audits, validators, tests, or application source. The README identifies V3 as the current planning baseline but does not authorize implementation. Do not mark V3 tasks started/completed, change historical T-02 status, present the team-leader report as independently verified evidence, or treat local remote-tracking refs as current remote verification. No implementation, data import, training, app development, installation, commit, push, merge, collaborator invitation, or permissions change is authorized by this preparation.
+Do not alter the V2.2 Master Plan, canonical Task Ledger, approval records, T-00 audits, validators, tests, or application source. The README identifies V3 as the current planning baseline but does not authorize implementation. The transition-preparation snapshot did not mark V3 tasks started/completed; V3-01's later completion is recorded in its kickoff record and ledger, while V3-02 through V3-15 remain Planned — Not Started. Do not change historical T-02 status, present the team-leader report as independently verified evidence, or treat local remote-tracking refs as current remote verification. No implementation, data import, training, app development, or permissions change is authorized by this transition snapshot.
