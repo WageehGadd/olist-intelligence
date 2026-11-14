@@ -44,11 +44,6 @@ METADATA_NAMES = ("order_id", "purchase_ts", "late")
 BRAZIL_UFS = frozenset(
     "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PE PI PR RJ RN RS RO RR SC SP SE TO".split()
 )
-# This intentionally mirrors the frozen Shared Contracts v1 request enum. That
-# enum omits PR even though PR is a valid Brazilian UF in the raw Olist data.
-SUPPORTED_CUSTOMER_UFS = frozenset(
-    "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PE PI RJ RN RS RO RR SC SP SE TO".split()
-)
 _PURCHASE_PATTERNS = (
     (re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$"), "%Y-%m-%d %H:%M:%S"),
     (re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$"), "%Y-%m-%dT%H:%M:%S"),
@@ -136,11 +131,6 @@ def derive_model_features(
         raise FeatureInputError("missing_customer_state", "customer state is missing")
     if not isinstance(customer_state, str) or customer_state != customer_state.strip() or customer_state not in BRAZIL_UFS:
         raise FeatureInputError("invalid_customer_state", "customer state must be an uppercase Brazilian UF")
-    if customer_state not in SUPPORTED_CUSTOMER_UFS:
-        raise FeatureInputError(
-            "unsupported_customer_state",
-            "customer state is a valid Brazilian UF but is absent from the frozen prediction request enum",
-        )
     if not isinstance(item_rows, (list, tuple)):
         raise FeatureInputError("invalid_item_rows", "items must be a list of item rows")
     if not item_rows:

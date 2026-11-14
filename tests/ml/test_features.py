@@ -8,7 +8,6 @@ import pytest
 from src.ml.features import (
     FEATURE_NAMES,
     BRAZIL_UFS,
-    SUPPORTED_CUSTOMER_UFS,
     FeatureInputError,
     _validate_generated_paths,
     build_historical_features,
@@ -51,13 +50,14 @@ def test_frozen_feature_order_types_and_training_inference_parity():
     assert type(historical["freight_total"]) is float
 
 
-def test_parana_is_valid_but_unsupported_by_frozen_request_enum():
+def test_parana_is_accepted_by_contract_and_historical_inference_paths_match():
     assert len(BRAZIL_UFS) == 27
-    assert len(SUPPORTED_CUSTOMER_UFS) == 26
-    assert BRAZIL_UFS - SUPPORTED_CUSTOMER_UFS == {"PR"}
-    with pytest.raises(FeatureInputError) as exc:
-        _derive(state="PR")
-    assert exc.value.reason == "unsupported_customer_state"
+    assert "PR" in BRAZIL_UFS
+    historical = _derive(state="PR")
+    inference = _derive(purchase="2017-05-01T23:59:59", state="PR")
+    assert historical == inference
+    assert historical["customer_state"] == "PR"
+    assert tuple(historical) == FEATURE_NAMES
 
 
 def test_feature_generator_output_paths_cannot_overwrite_inputs_or_raw_files(tmp_path):
@@ -96,7 +96,6 @@ def test_strict_source_naive_date_rules(purchase, promise, reason):
         (None, [{"price": 1, "freight_value": 1}], "missing_customer_state"),
         ("sp", [{"price": 1, "freight_value": 1}], "invalid_customer_state"),
         ("XX", [{"price": 1, "freight_value": 1}], "invalid_customer_state"),
-        ("PR", [{"price": 1, "freight_value": 1}], "unsupported_customer_state"),
         ("SP", [], "missing_item_rows"),
         ("SP", [{"price": 1, "freight_value": 1, "seller_id": "x"}], "invalid_item_rows"),
         ("SP", [{"price": True, "freight_value": 1}], "invalid_item_amount"),
@@ -142,6 +141,7 @@ def _historical_fixture():
 
 def test_historical_builder_aggregates_items_and_preserves_order_grain():
     population, orders, items, customers = _historical_fixture()
+    customers.loc[customers.customer_id.eq("c1"), "customer_state"] = "PR"
     frame, audit = build_historical_features(population, orders, items, customers)
     assert len(frame) == 2
     assert frame.order_id.is_unique
@@ -150,8 +150,10 @@ def test_historical_builder_aggregates_items_and_preserves_order_grain():
     assert frame.loc[frame.order_id.eq("o1"), "freight_total"].item() == 5.5
     assert frame.loc[frame.order_id.eq("o1"), "item_count"].item() == 2
     assert frame.loc[frame.order_id.eq("o2"), "item_count"].item() == 1
+    assert frame.loc[frame.order_id.eq("o1"), "customer_state"].item() == "PR"
     assert not {"delivered_date", "order_status", "customer_id", "order_item_id"}.intersection(frame.columns)
     assert audit["population_input_rows"] == audit["feature_ready_rows"] == 2
+    assert audit["exclusive_feature_exclusion_counts"]["unsupported_customer_state"] == 0
     assert audit["population_input_late"] == audit["feature_ready_late"] == 1
     assert audit["exclusive_feature_exclusion_counts"]["missing_item_rows"] == 0
 
@@ -178,7 +180,7 @@ def test_historical_builder_rejects_duplicate_item_grain_and_target_mismatch():
 
 @pytest.mark.parametrize(
     "state,expected_reason",
-    [(None, "missing_customer_state"), ("XX", "invalid_customer_state"), ("PR", "unsupported_customer_state")],
+    [(None, "missing_customer_state"), ("XX", "invalid_customer_state")],
 )
 def test_historical_builder_audits_bad_customer_state(state, expected_reason):
     population, orders, items, customers = _historical_fixture()
