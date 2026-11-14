@@ -117,10 +117,71 @@ def test_missing_order_id_is_rejected() -> None:
 def test_output_cannot_overwrite_or_write_inside_raw_data(tmp_path: Path) -> None:
     input_path = tmp_path / "orders.csv"
     pd.DataFrame([make_order("synthetic")]).to_csv(input_path, index=False)
+    original_input = input_path.read_bytes()
     raw_dir = Path(__file__).resolve().parents[2] / "data" / "raw"
+    raw_output = raw_dir / f"v3-06-{tmp_path.name}.csv"
+
+    with pytest.raises(ValueError, match="must differ from the input orders CSV"):
+        build_from_csv(input_path, input_path)
+    assert input_path.read_bytes() == original_input
 
     with pytest.raises(ValueError, match="inside protected raw-data directory"):
-        build_from_csv(input_path, raw_dir / "never-write-this-file.csv")
+        build_from_csv(input_path, raw_output)
+    assert not raw_output.exists()
+
+
+@pytest.mark.parametrize(
+    ("column", "timestamp", "expected_reason"),
+    [
+        (
+            "order_purchase_timestamp",
+            "not-a-timestamp",
+            "invalid_purchase_timestamp",
+        ),
+        (
+            "order_purchase_timestamp",
+            "2017-01-01 10:00:00+00:00",
+            "invalid_purchase_timestamp",
+        ),
+        (
+            "order_estimated_delivery_date",
+            "not-a-timestamp",
+            "invalid_estimated_delivery_timestamp",
+        ),
+        (
+            "order_estimated_delivery_date",
+            "2017-01-03 00:00:00-03:00",
+            "invalid_estimated_delivery_timestamp",
+        ),
+        (
+            "order_delivered_customer_date",
+            "not-a-timestamp",
+            "invalid_delivered_customer_timestamp",
+        ),
+        (
+            "order_delivered_customer_date",
+            "2017-01-03 00:00:00+00:00",
+            "invalid_delivered_customer_timestamp",
+        ),
+    ],
+)
+def test_malformed_and_timezone_timestamps_are_excluded_by_field(
+    column: str,
+    timestamp: str,
+    expected_reason: str,
+) -> None:
+    order = make_order("synthetic-invalid-time")
+    order[column] = timestamp
+
+    population, audit = build_delivery_population(pd.DataFrame([order]))
+
+    assert population.empty
+    assert audit["source_rows"] == 1
+    assert audit["excluded_rows"] == 1
+    assert audit["eligible_rows"] == 0
+    assert audit["exclusion_counts"][expected_reason] == 1
+    assert sum(audit["exclusion_counts"].values()) == 1
+    assert audit["timestamp_diagnostics"][column]["invalid_nonmissing"] == 1
 
 
 def test_missing_input_path_has_a_clear_error(tmp_path: Path) -> None:
