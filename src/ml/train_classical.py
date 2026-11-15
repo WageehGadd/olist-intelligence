@@ -1,10 +1,11 @@
-"""Train V3-08 classical baselines without evaluating final test labels."""
+"""Train V3-08 baselines; held-out values are used only for artifact integrity checks."""
 
 from __future__ import annotations
 
 import argparse
 import csv
 import hashlib
+import io
 import json
 import sys
 import time
@@ -32,7 +33,7 @@ from sklearn.pipeline import Pipeline
 
 from src.ml.features import FEATURE_NAMES, METADATA_NAMES, parse_purchase_timestamp
 from src.ml.preprocessing import make_preprocessor, validate_feature_frame
-from src.ml.split import BOUNDARIES, SPLIT_COLUMN
+from src.ml.split import BOUNDARIES, SPLIT_COLUMN, assign_chronological_splits
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -86,12 +87,13 @@ def load_training_validation(
     split_path: Path = DEFAULT_SPLIT_PATH,
     manifest_path: Path = DEFAULT_MANIFEST_PATH,
 ) -> dict[str, Any]:
-    """Validate V3-07 artifacts; only train/validation labels enter this function."""
+    """Validate V3-07 artifacts; only train/validation rows enter model evaluation."""
     for path in (feature_path, audit_path, split_path, manifest_path):
         if not path.is_file():
             raise FileNotFoundError(f"Required V3-07 artifact not found: {path}")
 
-    feature_sha = _sha256(feature_path)
+    feature_bytes = feature_path.read_bytes()
+    feature_sha = hashlib.sha256(feature_bytes).hexdigest()
     audit = json.loads(audit_path.read_text(encoding="utf-8"))
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     dataset = manifest.get("dataset")
@@ -131,6 +133,20 @@ def load_training_validation(
     if audit.get("exclusive_feature_exclusion_counts") != dataset.get("feature_exclusions"):
         raise ValueError("Feature audit exclusions do not match the split manifest")
 
+    feature_frame = pd.read_csv(
+        io.BytesIO(feature_bytes),
+        dtype={"order_id": "string", "purchase_ts": "string", "customer_state": "string"},
+    )
+    expected_feature_columns = [*METADATA_NAMES, *FEATURE_NAMES]
+    if list(feature_frame.columns) != expected_feature_columns:
+        raise ValueError("Verified feature artifact columns differ from the frozen V3-07 schema")
+    expected_split = assign_chronological_splits(feature_frame)
+    expected_buffer = io.StringIO(newline="")
+    expected_split.to_csv(expected_buffer, index=False)
+    split_bytes = split_path.read_bytes()
+    if expected_buffer.getvalue().encode("utf-8") != split_bytes:
+        raise ValueError("Split CSV contents do not match deterministic reconstruction from the verified feature artifact")
+
     partition_manifest = manifest.get("counts_and_label_distribution")
     excluded_manifest = manifest.get("excluded_from_splits")
     if not isinstance(partition_manifest, dict) or not isinstance(excluded_manifest, dict):
@@ -147,7 +163,7 @@ def load_training_validation(
     ids: set[str] = set()
     model_rows: dict[str, list[dict[str, Any]]] = {"train": [], "validation": []}
     labels: dict[str, list[int]] = {"train": [], "validation": []}
-    with split_path.open("r", encoding="utf-8", newline="") as stream:
+    with io.StringIO(split_bytes.decode("utf-8"), newline="") as stream:
         reader = csv.reader(stream)
         try:
             header = next(reader)
@@ -233,7 +249,7 @@ def load_training_validation(
         "validation_y": np.asarray(labels["validation"], dtype=np.int8),
         "partition_rows": counts,
         "feature_sha256": feature_sha,
-        "split_sha256": _sha256(split_path),
+        "split_sha256": hashlib.sha256(split_bytes).hexdigest(),
         "manifest": manifest,
         "order_ids_disjoint": True,
     }
@@ -365,15 +381,33 @@ def evaluate_candidate(
     }, validation_probability
 
 
-def _validate_output_paths(model_dir: Path, metrics_path: Path) -> None:
+def _paths_overlap(first: Path, second: Path) -> bool:
+    return first == second or first in second.parents or second in first.parents
+
+
+def _validate_output_paths(
+    model_dir: Path,
+    metrics_path: Path,
+    input_paths: tuple[Path, ...] | list[Path] = (),
+) -> None:
+    model_dir = model_dir.resolve()
+    metrics_path = metrics_path.resolve()
+    resolved_inputs = [path.resolve() for path in input_paths]
+
+    if _paths_overlap(model_dir, metrics_path):
+        raise ValueError("Model and metrics output destinations must not overlap")
+    for input_path in resolved_inputs:
+        if _paths_overlap(model_dir, input_path) or _paths_overlap(metrics_path, input_path):
+            raise ValueError("Output destination must not equal, contain, or be contained by an input artifact")
+
     model_root = (ROOT / "models" / "local").resolve()
     metrics_root = (ROOT / "data" / "processed").resolve()
     try:
-        model_dir.resolve().relative_to(model_root)
+        model_dir.relative_to(model_root)
     except ValueError as exc:
         raise ValueError("Model artifacts must be written under ignored models/local/") from exc
     try:
-        metrics_path.resolve().relative_to(metrics_root)
+        metrics_path.relative_to(metrics_root)
     except ValueError as exc:
         raise ValueError("Metrics artifacts must be written under ignored data/processed/") from exc
 
@@ -387,7 +421,8 @@ def run_experiment(
     metrics_path: Path = DEFAULT_METRICS_PATH,
     seed: int = MODEL_SEED,
 ) -> dict[str, Any]:
-    _validate_output_paths(model_dir, metrics_path)
+    input_paths = (feature_path, audit_path, split_path, manifest_path)
+    _validate_output_paths(model_dir, metrics_path, input_paths)
     data = load_training_validation(feature_path, audit_path, split_path, manifest_path)
     train_x, train_y = data["train_x"], data["train_y"]
     validation_x, validation_y = data["validation_x"], data["validation_y"]
@@ -451,8 +486,9 @@ def run_experiment(
         "model_artifacts": artifacts,
         "provisional_classical_candidate_by_validation_average_precision": provisional,
         "selection_note": "Provisional classical candidate only; final selection waits for V3-09 and does not use test outcomes.",
+        "held_out_data_use": "Held-out rows are read only for split-artifact integrity verification. Their labels and predictors are not used for model fitting, validation metrics, threshold optimization, candidate selection, or test performance evaluation.",
         "test_evaluated": False,
-        "test_labels_accessed": False,
+        "test_metrics_generated": False,
         "test_metrics": None,
         "warnings": {name: result["warnings"] for name, result in results.items()},
         "runtime_seconds": {
@@ -514,7 +550,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"V3-08 classical training failed: {exc}", file=sys.stderr)
         return 2
 
-    print("V3-08 completed; test labels were not read and no test metrics were generated.")
+    print("V3-08 completed; held-out rows were used only for artifact-integrity verification, not fitting, validation metrics, thresholds, candidate selection, or test metrics.")
     print("Training/validation class balance:", json.dumps(metrics["class_balance"], indent=2))
     print("Validation metrics:")
     for name, result in metrics["models"].items():

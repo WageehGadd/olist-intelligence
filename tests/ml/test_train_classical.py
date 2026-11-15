@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 import hashlib
 import json
 from pathlib import Path
@@ -13,13 +12,15 @@ from sklearn.metrics import average_precision_score, roc_auc_score
 
 from src.ml.features import FEATURE_NAMES, METADATA_NAMES
 from src.ml.train_classical import (
-    EXPECTED_SPLIT_COLUMNS,
+    DEFAULT_METRICS_PATH,
+    DEFAULT_MODEL_DIR,
     _validate_output_paths,
     build_pipelines,
     choose_f1_threshold,
     evaluate_candidate,
     load_training_validation,
     positive_class_probability,
+    run_experiment,
     threshold_metrics,
 )
 
@@ -40,10 +41,26 @@ def _feature_row(order_id: str, purchase_ts: str, late: int, state: str = "SP") 
     }
 
 
-def _fixture_artifacts(tmp_path: Path, *, test_label: str = "DO_NOT_READ"):
+def _fixture_artifacts(tmp_path: Path):
     feature_path = tmp_path / "delivery_features.csv"
-    feature_path.write_bytes(b"synthetic feature artifact bytes\n")
+    rows = [
+        _feature_row("tr0", "2017-06-01 10:00:00", 0),
+        _feature_row("tr1", "2017-06-02 10:00:00", 1),
+        _feature_row("tr2", "2017-06-03 10:00:00", 0),
+        _feature_row("tr3", "2017-06-04 10:00:00", 0),
+        _feature_row("va0", "2018-01-01 10:00:00", 0, "PR"),
+        _feature_row("va1", "2018-01-02 10:00:00", 1, "PR"),
+        _feature_row("va2", "2018-02-01 10:00:00", 1, "PR"),
+        _feature_row("va3", "2018-03-01 10:00:00", 0, "PR"),
+        _feature_row("te0", "2018-04-01 10:00:00", 1),
+        _feature_row("te1", "2018-04-02 10:00:00", 0),
+        _feature_row("old", "2016-12-31 10:00:00", 0),
+        _feature_row("new", "2018-09-01 10:00:00", 0),
+    ]
+    features = pd.DataFrame(rows, columns=[*METADATA_NAMES, *FEATURE_NAMES])
+    features.to_csv(feature_path, index=False)
     feature_sha = hashlib.sha256(feature_path.read_bytes()).hexdigest()
+
     audit_path = tmp_path / "delivery_feature_audit.json"
     audit = {
         "feature_artifact_sha256": feature_sha,
@@ -59,32 +76,9 @@ def _fixture_artifacts(tmp_path: Path, *, test_label: str = "DO_NOT_READ"):
     audit_path.write_text(json.dumps(audit), encoding="utf-8")
 
     split_path = tmp_path / "delivery_feature_splits.csv"
-    rows = [
-        _feature_row("tr0", "2017-06-01 10:00:00", 0),
-        _feature_row("tr1", "2017-06-02 10:00:00", 1),
-        _feature_row("tr2", "2017-06-03 10:00:00", 0),
-        _feature_row("tr3", "2017-06-04 10:00:00", 0),
-        _feature_row("va0", "2018-01-01 10:00:00", 0, "PR"),
-        _feature_row("va1", "2018-01-02 10:00:00", 1, "PR"),
-        _feature_row("va2", "2018-02-01 10:00:00", 1, "PR"),
-        _feature_row("va3", "2018-03-01 10:00:00", 0, "PR"),
-        _feature_row("te0", "2018-04-01 10:00:00", 1),
-        _feature_row("te1", "2018-04-02 10:00:00", 0),
-        _feature_row("old", "2016-12-31 10:00:00", 0),
-        _feature_row("new", "2018-09-01 10:00:00", 0),
-    ]
-    partitions = [
-        "train", "train", "train", "train",
-        "validation", "validation", "validation", "validation",
-        "test", "test", "excluded_pre_window", "excluded_post_window",
-    ]
-    with split_path.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.writer(stream)
-        writer.writerow(EXPECTED_SPLIT_COLUMNS)
-        for record, partition in zip(rows, partitions):
-            if partition == "test":
-                record["late"] = test_label
-            writer.writerow([record[name] for name in [*METADATA_NAMES, *FEATURE_NAMES]] + [partition])
+    from src.ml.split import assign_chronological_splits
+
+    assign_chronological_splits(features).to_csv(split_path, index=False)
 
     manifest_path = tmp_path / "delivery_split_manifest.json"
     manifest = {
@@ -113,7 +107,7 @@ def _fixture_artifacts(tmp_path: Path, *, test_label: str = "DO_NOT_READ"):
         "counts_and_label_distribution": {
             "train": {"rows": 4, "positive": 1, "negative": 3},
             "validation": {"rows": 4, "positive": 2, "negative": 2},
-            "test": {"rows": 2, "positive": "NOT TO BE USED"},
+            "test": {"rows": 2, "positive": 1, "negative": 1},
         },
         "excluded_from_splits": {
             "pre_window": {"rows": 1},
@@ -124,7 +118,7 @@ def _fixture_artifacts(tmp_path: Path, *, test_label: str = "DO_NOT_READ"):
     return feature_path, audit_path, split_path, manifest_path
 
 
-def test_loader_uses_exact_features_and_never_parses_test_labels(tmp_path):
+def test_loader_accepts_correct_deterministic_split_and_returns_only_train_validation_targets(tmp_path):
     paths = _fixture_artifacts(tmp_path)
     loaded = load_training_validation(*paths)
     assert list(loaded["train_x"].columns) == list(FEATURE_NAMES)
@@ -163,13 +157,103 @@ def test_mismatched_feature_or_split_manifest_is_rejected(tmp_path, mutation, ma
         load_training_validation(feature_path, audit_path, split_path, manifest_path)
 
 
-def test_split_loader_rejects_train_validation_order_overlap(tmp_path):
+@pytest.mark.parametrize(
+    "mutation",
+    ["train_feature", "validation_feature", "membership", "target", "stale_features"],
+)
+def test_loader_rejects_split_not_derived_from_verified_feature_artifact(tmp_path, mutation):
     feature_path, audit_path, split_path, manifest_path = _fixture_artifacts(tmp_path)
-    content = split_path.read_text()
-    content = content.replace("va0,2018-01-01", "tr0,2018-01-01", 1)
-    split_path.write_text(content)
-    with pytest.raises(ValueError, match="globally unique"):
+    if mutation == "train_feature":
+        split = pd.read_csv(split_path)
+        split.loc[split["order_id"] == "tr0", "item_price_total"] = 999.0
+        split.to_csv(split_path, index=False)
+    elif mutation == "validation_feature":
+        split = pd.read_csv(split_path)
+        split.loc[split["order_id"] == "va0", "item_price_total"] = 999.0
+        split.to_csv(split_path, index=False)
+    elif mutation == "membership":
+        split = pd.read_csv(split_path)
+        split.loc[split["order_id"] == "va0", "split"] = "train"
+        split.loc[split["order_id"] == "tr0", "split"] = "validation"
+        split.to_csv(split_path, index=False)
+    elif mutation == "target":
+        split = pd.read_csv(split_path)
+        split.loc[split["order_id"] == "te0", "late"] = 0
+        split.to_csv(split_path, index=False)
+    else:
+        features = pd.read_csv(feature_path)
+        features.loc[features["order_id"] == "tr0", "item_price_total"] = 999.0
+        features.to_csv(feature_path, index=False)
+        # Keep the old split, audit, and manifest: they describe a different feature artifact.
+
+    if mutation == "stale_features":
+        expected_error = "Feature CSV checksum"
+    else:
+        expected_error = "Split CSV contents do not match deterministic reconstruction"
+    with pytest.raises(ValueError, match=expected_error):
         load_training_validation(feature_path, audit_path, split_path, manifest_path)
+
+
+def test_split_integrity_failure_precedes_fit_and_output_creation(tmp_path, monkeypatch):
+    paths = list(_fixture_artifacts(tmp_path))
+    split_path = paths[2]
+    split = pd.read_csv(split_path)
+    split.loc[split["order_id"] == "tr0", "item_count"] = 999
+    split.to_csv(split_path, index=False)
+
+    root = Path(__file__).resolve().parents[2]
+    model_dir = root / "models/local/v3_08_integrity_guard_test"
+    metrics_path = root / "data/processed/v3_08_integrity_guard_test.json"
+    assert not model_dir.exists()
+    assert not metrics_path.exists()
+    monkeypatch.setattr(
+        "src.ml.train_classical.build_pipelines",
+        lambda *_: pytest.fail("model fitting must not begin after a split integrity failure"),
+    )
+    with pytest.raises(ValueError, match="Split CSV contents do not match deterministic reconstruction"):
+        run_experiment(*paths, model_dir=model_dir, metrics_path=metrics_path)
+    assert not model_dir.exists()
+    assert not metrics_path.exists()
+
+
+@pytest.mark.parametrize("input_index", range(4), ids=["feature", "audit", "split", "manifest"])
+def test_run_experiment_rejects_metrics_path_colliding_with_any_input_before_writing(
+    tmp_path, monkeypatch, input_index
+):
+    paths = _fixture_artifacts(tmp_path)
+    input_path = paths[input_index]
+    original_bytes = input_path.read_bytes()
+    monkeypatch.setattr(
+        "src.ml.train_classical.build_pipelines",
+        lambda *_: pytest.fail("model fitting must not begin after an output collision"),
+    )
+    with pytest.raises(ValueError, match="Output destination"):
+        run_experiment(*paths, model_dir=DEFAULT_MODEL_DIR, metrics_path=input_path)
+    assert input_path.read_bytes() == original_bytes
+
+
+def test_output_path_policy_resolves_symlink_aliases_and_rejects_overlapping_destinations(tmp_path):
+    root = Path(__file__).resolve().parents[2]
+    input_file = tmp_path / "input.csv"
+    input_file.write_text("synthetic\n", encoding="utf-8")
+    alias = tmp_path / "input-alias.csv"
+    alias.symlink_to(input_file)
+    with pytest.raises(ValueError, match="Output destination"):
+        _validate_output_paths(
+            root / "models/local/allowed",
+            alias,
+            input_paths=(input_file,),
+        )
+    with pytest.raises(ValueError, match="must not overlap"):
+        _validate_output_paths(
+            root / "models/local/shared",
+            root / "models/local/shared/metrics.json",
+        )
+    with pytest.raises(ValueError, match="must not overlap"):
+        _validate_output_paths(
+            root / "models/local/shared",
+            root / "models/local/shared",
+        )
 
 
 def test_probability_extraction_uses_label_one_column_and_checks_range():
@@ -278,3 +362,5 @@ def test_output_path_policy_rejects_raw_paths_and_allows_local_model_area():
     with pytest.raises(ValueError, match="data/processed"):
         _validate_output_paths(root / "models/local/allowed", root / "data/raw/metrics.json")
     _validate_output_paths(root / "models/local/allowed", root / "data/processed/metrics.json")
+    assert DEFAULT_MODEL_DIR.is_relative_to(root / "models/local")
+    assert DEFAULT_METRICS_PATH.is_relative_to(root / "data/processed")

@@ -6,11 +6,11 @@ This report compares a prior DummyClassifier, LogisticRegression, and RandomFore
 
 All candidates use exactly the eight V3-07 predictors in frozen order: purchase_hour, purchase_weekday, purchase_month, promised_lead_days, customer_state, item_price_total, freight_total, item_count. Order ID, purchase timestamp, target, delivery outcomes, and other metadata are not predictors. Each candidate has its own preprocessing-plus-estimator Pipeline built with the shared V3-07 make_preprocessor. Imputers, scaler, and one-hot categories fit separately on training rows only. Validation is transform-only. No class weighting is used; candidates share the same training objective, while imbalance is described and thresholds are chosen on validation.
 
-**The final test labels were not read by the V3-08 training/evaluation path. No test metrics were calculated.** The loader checks test row count, order ID uniqueness, purchase-date membership, and split assignment only. It does not index test target or feature columns. Test performance remains reserved until the V3-09 comparison and final selection protocol are complete.
+**Held-out rows are parsed only to verify the split artifact's integrity; they are not used for model fitting, validation metrics, threshold optimization, candidate selection, or test performance evaluation. No test metrics were generated.** Before fitting, the loader hashes the canonical V3-07 feature CSV against the audit and manifest, reconstructs the complete deterministic split from that verified feature artifact, and requires exact byte-for-byte equality with the split CSV. This integrity check necessarily reads held-out feature and target values from the canonical feature artifact, but those values do not enter training or evaluation. Test performance remains reserved until the V3-09 comparison and final selection protocol are complete.
 
 ## Frozen data and split verification
 
-The local run used the V3-07 generated artifacts after validating the feature CSV SHA-256 against both its feature audit and split manifest, checking the exact schema and feature order, reconciling train/validation labels and partition row counts to the manifest, and checking the fixed boundaries.
+The local run used the V3-07 generated artifacts after validating the feature CSV SHA-256 against both its feature audit and split manifest, checking the exact schema and feature order, reconstructing the full split from the verified feature CSV and matching the split artifact byte-for-byte, reconciling train/validation labels and partition row counts to the manifest, and checking the fixed boundaries. The held-out labels and predictors were parsed only as part of that exact artifact-integrity check; test outcomes did not affect any fitted model, validation metric, threshold, candidate choice, or reported performance result.
 
 | Partition | Purchase-date window | Rows | Late |
 |---|---|---:|---:|
@@ -70,7 +70,7 @@ Reproduce the local comparison from the repository root with:
 
     .venv/bin/python -m src.ml.train_classical
 
-The run used Python 3.10.20, scikit-learn 1.7.2, pandas 2.3.3, NumPy 2.2.6, and joblib 1.6.0. Per-model fit times were Dummy 0.024 s, LR 0.047 s, and RF 0.596 s; total experiment time including predictions, persistence, and reload verification was 52.658 s. These are local wall-clock observations, not performance guarantees.
+The run used Python 3.10.20, scikit-learn 1.7.2, pandas 2.3.3, NumPy 2.2.6, and joblib 1.6.0. Per-model fit times were Dummy 0.026 s, LR 0.053 s, and RF 0.608 s; total experiment time including predictions, persistence, and reload verification was 54.438 s. These are local wall-clock observations, not performance guarantees.
 
 Pipelines include their own fitted preprocessing and are saved only under ignored models/local/v3_08_classical/. Reloaded probabilities matched pre-save validation probabilities for all three candidates.
 
@@ -80,7 +80,7 @@ Pipelines include their own fitted preprocessing and are saved only under ignore
 | models/local/v3_08_classical/logisticregression.joblib | 4532b8de92bd50f7bb2130595907ed4f45409e24d097ae788d120ae75a1f20d4 | 4,890 bytes |
 | models/local/v3_08_classical/randomforestclassifier.joblib | 218c4e3f387c2acfd0996fe328df7d9aadee93053cea2834c1d763a9688e8167 | 11,749,019 bytes |
 
-The ignored local metrics JSON is data/processed/v3_08_classical_metrics.json. It records candidate configs, train/validation metrics, threshold rules, package versions, row counts, warnings, runtime, and artifact metadata. It explicitly records that test metrics were not generated.
+The ignored local metrics JSON is data/processed/v3_08_classical_metrics.json. It records candidate configs, train/validation metrics, threshold rules, package versions, row counts, warnings, runtime, and artifact metadata. It states that held-out rows were read only to verify split-artifact integrity and records that no test metrics were generated; it does not claim held-out labels or predictors were never accessed.
 
 Input provenance:
 
