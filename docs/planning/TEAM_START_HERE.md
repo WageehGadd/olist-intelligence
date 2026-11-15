@@ -1,97 +1,52 @@
-# Team Start Here — Olist Intelligence
+# Olist Intelligence V3 — Team Start Here
 
-For Wageeh, Hamza, Hasnaa and Rana. **Current stage: T-01 documentation under team-lead review. Instructor approval is user-reported, dated October 26, 2026; independent authentication is not claimed. No other task is authorized by this guide. Coordinate every technical task with Wageeh first, even if its dependencies appear satisfied.** See the [approval record](../approval/T-01_instructor_approval.md) and [concept brief](../concept_brief.md).
+For Wageeh, Hamza, Hasnaa, and Rana. **V3 is the official execution baseline on `main`.** This guide points to the frozen V3 plan and ledger; it does not authorize a task start by itself.
 
 ## What we are building
 
-A DEPI Round 5 academic e-commerce intelligence platform: SQL analytics and descriptive customer intelligence, delivery lateness prediction, Portuguese submitted-review rating-proxy analysis with a classical/CNN comparison, explainability, a FastAPI backend and React frontend. It is an academic retrospective demonstration, not a production service. Review NLP is not gold-standard sentiment or purchase-time review-risk prediction; future customer value is outside the approved proposed scope.
+A bounded academic demonstration using the historical Brazilian E-Commerce Public Dataset by Olist: SQLite business analytics, data cleaning and EDA, retrospective delivery-delay prediction, and one FastAPI application serving Jinja2/Bootstrap pages. The ML stream compares Logistic Regression and Random Forest with a small MLP on the same population and chronological evaluation design. The approved scope does not include React, CNN/BERT review modeling, RFM/customer prediction, or a production CI/CD/deployment platform.
 
-## Official planning references
+The delivery label is retrospective and limited to eligible delivered orders. The historical extract cannot prove that every feature was available at purchase time, and the result is not a live all-order operational risk estimate. This is an academic demonstration, not a production service or causal/business-impact claim.
 
-- [Full Master Execution Plan V2.2](OLIST_INTELLIGENCE_MASTER_EXECUTION_PLAN_V2_2.md): architecture, detailed task specifications, scientific gates and Git workflow.
-- [Canonical Task Ledger V2.2](OLIST_INTELLIGENCE_TASK_LEDGER_V2_2.csv): ownership, reviewers, dependencies, scope, estimates and status.
-- [V2.2 validation](OLIST_INTELLIGENCE_V2_2_VALIDATION.md) and [changelog](OLIST_INTELLIGENCE_V2_2_CHANGELOG.md).
-- [Approval state](approval_state_v2_2.json), [delivery input contract](delivery_contract_v2_2.json) and [schedule assumptions](schedule_config_v2_2.json).
-- [T-00 final audit](../audits/FINAL_DATASET_AUDIT_REPORT.md) and [audit reproduction guide](../audits/README.md).
+## Official V3 references
 
-V2.2 remains the official planning source of truth. This guide summarizes it; it does not change assignments, dependencies, task status or scope. Consult Parts 10–11 and the ledger if a summary is unclear.
+- [Master Execution Plan](v3/MASTER_EXECUTION_PLAN_V3.md) — scope, task specifications, dependencies, acceptance criteria, workflow, and limitations.
+- [Shared Contracts v1](v3/SHARED_CONTRACTS.md) — canonical frozen data, KPI, file, API, and UI interfaces.
+- [Canonical V3 Task Ledger](v3/OLIST_INTELLIGENCE_TASK_LEDGER_V3.csv) — task owner, dependencies, status, and deliverables.
+- Individual plans: [Wageeh](v3/WAGEEH_EXECUTION_PLAN.md), [Hamza](v3/HAMZA_EXECUTION_PLAN.md), [Hasnaa](v3/HASNAA_EXECUTION_PLAN.md), and [Rana](v3/RANA_EXECUTION_PLAN.md).
+- [V3-01 contract and kickoff record](v3/V3-01_CONTRACT_FREEZE_AND_KICKOFF.md) — approval provenance, agreed workflow, and per-member setup gates.
+- [V2.2-to-V3 transition record](v3/V2_TO_V3_TRANSITION_PLAN.md).
+- [Historical V2.2 onboarding archive](archive/TEAM_START_HERE_V2_2.md), [V2.2 Master Plan](OLIST_INTELLIGENCE_MASTER_EXECUTION_PLAN_V2_2.md), and [V2.2 Task Ledger](OLIST_INTELLIGENCE_TASK_LEDGER_V2_2.csv).
 
-## What can happen now, and what is blocked
+If this guide and the Master Plan or ledger differ, the Master Plan and canonical V3 ledger govern task scope, ownership, dependencies, and status; Shared Contracts v1 governs interfaces.
 
-Now: read the plan/audit, understand your assignments, discuss skills/access and ask Wageeh about coordination. Only T-01 proposal/approval documentation is currently authorized. No training, ETL, API, frontend, CI implementation or T-02 repository integration is started by this update.
+## Approval and current ledger status
 
-T-00 is completed locally, and its source/reports/tests are present in the published baseline. T-01 (Wageeh) is authorized for this documentation update; the new brief awaits review/submission confirmation. T-02 (Hamza) has its T-00 dependency met but still awaits a separate team-lead start decision and its own CI/fixture/integration deliverables. T-02 may later proceed before instructor approval as V2.2 allows; this guide does not authorize it or complete its CI/fixture/PR integration work.
+The team leader reports that the instructor approved the simplified V3 scope. No written approval evidence was supplied, and this report is not independently authenticated here. V3-01 and Shared Contracts v1 are recorded complete/frozen under delegated team-lead approval; this does not replace separate coordination for each task. The earlier V2.2 approval record concerns the original concept and is not evidence of V3 instructor approval.
 
-T-03 additionally needs T-02 complete AND `approval_gate_passed=true`. A recorded rejection never unlocks implementation; conditional approval requires incorporated changes accepted by the instructor, with evidence. The current gate passes on the attributed user report; T-03 remains blocked by T-02 and its other preconditions. The list below retains the original task allocation and prerequisite summaries; it does not claim the approval gate is still pending. Every task also needs all listed predecessor tasks completed, the Part 11 preconditions and team-lead coordination. Optional/Advanced tasks require explicit scope/budget coordination and never block mandatory delivery. T-23 additionally needs confirmed GPU access. No academic deadline is assumed.
+On the verified `main` baseline, **V3-01, V3-06, V3-07, and V3-08 are Completed**. The ledger lists the following remaining tasks as `Planned — Not Started`; that is the recorded ledger state, not independent verification of anyone's private workspace or out-of-repository progress.
 
-## Assigned owner tasks — dependency order
+| Member | Assigned V3 tasks and dependency order |
+|---|---|
+| **Wageeh** | **Completed:** V3-01 scope/contracts/kickoff; V3-06 delivery population; V3-07 features/split; V3-08 classical models. **Remaining:** V3-09 MLP comparison/model selection (after V3-07 and V3-08 evaluation contract); V3-12 FastAPI analytics routes (after V3-01 contracts; Hamza outputs are an integration input); V3-13 prediction endpoint/inference (after V3-09 and V3-01); V3-14 integration (after V3-03, V3-05, V3-11, V3-12, V3-13); V3-15 final verification/report/demo (after V3-14 and member handoffs). |
+| **Hamza** | V3-02 SQLite schema and raw-table loading (after V3-01 and local raw CSV access); V3-03 SQL business KPIs/reconciliation (after V3-02). |
+| **Hasnaa** | V3-04 profiling/cleaning outputs (after V3-01 and local raw CSV access); V3-05 EDA/charts/findings (after V3-04). |
+| **Rana** | V3-10 UI shell/components/synthetic mock data (after V3-01); V3-11 pages/charts/prediction form (after V3-10). |
 
-The lists below follow a topological order of the unchanged canonical graph, not a promised calendar or permission to start. “After” lists ALL direct dependencies, including other members' tasks. Reviewer/collaborator assignments remain in the ledger; review responsibilities are additional to these owner lists.
+Check the ledger and each task's full Master Plan specification before work: completing a predecessor does **not** automatically authorize another member to begin. Wageeh must coordinate and authorize each task start, and every listed dependency and setup gate must be satisfied. Do not infer or report team progress from the plan alone.
 
-### Wageeh
+## Before your first task
 
-- **T-00 — Dataset Feasibility Audit** (Governance, 0h). After: none. Completed locally; integration remains T-02.
-- **T-01 — Concept Brief & Instructor Approval** (Governance, 6h). After: T-00. Authorized documentation update under review; newly prepared brief submission remains unverified.
-- **T-03 — Data Contracts & DB Schema Design** (MVP, 12h). After: T-01(approval_gate_passed), T-02. Blocked by prerequisites / approval gate.
-- **T-10 — Delivery Target & Population Builder** (MVP, 8h). After: T-04, T-06. Blocked by prerequisites / approval gate.
-- **T-26 — API Design & Contract Specification** (MVP, 6h). After: T-03, T-05. Blocked by prerequisites / approval gate.
-- **T-11 — Delivery Feature Engineering** (MVP, 10h). After: T-10. Blocked by prerequisites / approval gate.
-- **T-23 — BERTimbau Fine-tuning (Optional)** (Optional, 14h). After: T-22. Blocked by prerequisites / approval gate.
-- **T-14 — Delivery Baseline Models** (MVP, 10h). After: T-13. Blocked by prerequisites / approval gate.
-- **T-16 — Gradient Boosted Trees (Advanced)** (Advanced, 8h). After: T-15. Blocked by prerequisites / approval gate.
-- **T-17 — Calibration & Threshold Selection** (MVP, 8h). After: T-14, T-15. Blocked by prerequisites / approval gate.
-- **T-19 — Delivery Model Packaging & Inference Contracts** (MVP, 8h). After: T-17, T-18. Blocked by prerequisites / approval gate.
-- **T-38 — Demo Environment & Deployment** (MVP, 6h). After: T-37, T-35. Blocked by prerequisites / approval gate.
-- **T-40 — Final Release & Handoff** (Governance, 4h). After: T-39. Blocked by prerequisites / approval gate.
+1. Wait for Wageeh's task-specific start coordination; confirm the task's dependencies are complete in the V3 ledger and read its Master Plan acceptance criteria and individual guide.
+2. In your own checkout, verify the repository identity, update from the agreed `main`, and confirm a clean working tree before creating a task branch.
+3. Check your local Python version with `.venv/bin/python --version` and compare it with the documented project baseline. The existing audit requirements file covers T-00 only; no complete V3 application/MLP dependency manifest is present. Do not invent a stack or install extra dependencies without coordination.
+4. If your task needs the original data, verify that all nine expected Olist CSVs listed in the kickoff record are locally extracted under `data/raw/`, readable, and have the required contract columns. The team leader reports sending the dataset ZIP, but teammates' local extraction, data access, and environment setup have not been independently verified. Keep source data local; do not send record-level samples or commit it.
+5. Confirm raw data and task-generated files are ignored with `git check-ignore`; keep local databases, processed outputs, model binaries, secrets, environments, and caches out of commits. Share setup pass/fail and version information, not private data.
 
-### Hamza
+If data, dependencies, a contract, or a predecessor is missing, stop and ask Wageeh to coordinate a resolution. Do not silently change a frozen interface.
 
-- **T-02 — T-00 Integration & CI Foundation** (MVP, 10h). After: T-00. Dependency met; awaiting team-lead start decision.
-- **T-05 — SQL Analytical Views** (MVP, 10h). After: T-04. Blocked by prerequisites / approval gate.
-- **T-07 — Business Analytics Module** (MVP, 8h). After: T-05. Blocked by prerequisites / approval gate.
-- **T-22 — DL Comparison (CNN)** (MVP, 10h). After: T-21. Blocked by prerequisites / approval gate.
-- **T-27 — API Core Implementation** (MVP, 10h). After: T-26. Blocked by prerequisites / approval gate.
-- **T-30 — Dashboard Screens** (MVP, 14h). After: T-27, T-07, T-08, T-09. Blocked by prerequisites / approval gate.
-- **T-24 — Review Risk Prediction (Advanced)** (Advanced, 10h). After: T-20, T-11, T-13. Blocked by prerequisites / approval gate.
-- **T-15 — Tree Model Experiments** (MVP, 10h). After: T-14. Blocked by prerequisites / approval gate.
-- **T-33 — End-to-End Integration** (MVP, 10h). After: T-31, T-32. Blocked by prerequisites / approval gate.
-- **T-36 — Documentation & Model Cards** (MVP, 8h). After: T-35. Blocked by prerequisites / approval gate.
+## Branch and Pull Request workflow
 
-### Hasnaa
+Use one task-specific branch from the coordinated base, make focused changes, run the task's relevant tests and `git diff --check`, and inspect the staged file list. Open a Pull Request into `main`; do not push directly to `main`. The team lead reviews and explicitly coordinates merges. These are the agreed team workflow, not a claim that GitHub branch protection or CI enforcement is configured. Report blockers before proposing changes to Shared Contracts v1.
 
-- **T-04 — ETL Pipeline Implementation** (MVP, 14h). After: T-03. Blocked by prerequisites / approval gate.
-- **T-08 — Customer RFM & Cohort Analysis** (MVP, 8h). After: T-05. Blocked by prerequisites / approval gate.
-- **T-21 — NLP Preprocessing & Classical Baseline** (MVP, 12h). After: T-20. Blocked by prerequisites / approval gate.
-- **T-12 — Customer Clustering (Optional)** (Optional, 8h). After: T-08. Blocked by prerequisites / approval gate.
-- **T-22B — NLP Model Packaging & Inference Contracts** (MVP, 6h). After: T-22. Blocked by prerequisites / approval gate.
-- **T-18 — Explainability Module** (MVP, 10h). After: T-17. Blocked by prerequisites / approval gate.
-- **T-28 — API Prediction Endpoints** (MVP, 8h). After: T-27, T-19, T-22B. Blocked by prerequisites / approval gate.
-- **T-31 — Prediction UI Screens** (MVP, 10h). After: T-28, T-30. Blocked by prerequisites / approval gate.
-- **T-34 — Explainability Integration** (MVP, 6h). After: T-18, T-33. Blocked by prerequisites / approval gate.
-
-### Rana
-
-- **T-06 — Data Quality Test Suite** (MVP, 10h). After: T-04. Blocked by prerequisites / approval gate.
-- **T-20 — Review Label Construction** (MVP, 8h). After: T-04. Blocked by prerequisites / approval gate.
-- **T-09 — Geographic & Seller Analytics** (MVP, 8h). After: T-05. Blocked by prerequisites / approval gate.
-- **T-37 — CI/CD Pipeline** (MVP, 8h). After: T-02, T-06. Blocked by prerequisites / approval gate.
-- **T-29 — Frontend Scaffold & Routing** (MVP, 8h). After: T-26. Blocked by prerequisites / approval gate.
-- **T-13 — Chronological Split Implementation** (MVP, 6h). After: T-11. Blocked by prerequisites / approval gate.
-- **T-25 — Experiment Tracking (Advanced)** (Advanced, 6h). After: T-14, T-21. Blocked by prerequisites / approval gate.
-- **T-32 — Model Insights Screen** (MVP, 6h). After: T-18, T-28. Blocked by prerequisites / approval gate.
-- **T-35 — End-to-End Testing** (MVP, 8h). After: T-34, T-33. Blocked by prerequisites / approval gate.
-- **T-39 — Presentation Preparation** (Governance, 8h). After: T-36, T-38. Blocked by prerequisites / approval gate.
-
-## Branches, reviews and sharing
-
-For future authorized task work, follow Master Plan Part 15: create a task branch from the coordinated base, named `feature/T-XX-short-description`; do not work directly on main. Commit messages and PR titles reference the task ID. Stage specific reviewed files, inspect the staged diff and never include authentic datasets, generated outputs, secrets or model weights. The assigned reviewer must approve before an authorized merge; describe changes, tests and limitations in the PR. CI/Tier A requirements apply once T-02 establishes CI; no green badge or branch protection exists by assumption today. Full-data Tier B checks stay local; audit tests currently include raw/aggregate-dependent cases awaiting T-02 isolation.
-
-Do not commit/push this initial sharing package or invite collaborators until Wageeh approves the publication checklist. An initial documentation-sharing commit does not mark T-02 or any other project task complete. Existing scripts are audit evidence, not instructions to rerun training during onboarding.
-
-For an optional planning-only consistency check (no raw data, ETL or model training):
-
-```sh
-.venv/bin/python -B scripts/planning/validate_master_plan_v2_2.py
-```
-
-Use the existing Python 3.10 virtual environment locally. Dataset files are obtained separately from their publisher after license review; they do not travel in Git. A clean clone will not contain local data/aggregates/model artifacts. Start with reading and coordination, not the audit reproduction/training commands.
+Authentic raw CSVs, generated data, SQLite databases, trained model binaries, secrets, virtual environments, and caches stay outside Git. Use clearly labeled synthetic fixtures when a task calls for mocks. Do not interpret a local test result as GitHub CI.
