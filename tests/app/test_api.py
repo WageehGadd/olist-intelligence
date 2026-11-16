@@ -57,9 +57,8 @@ def test_health_openapi_and_exact_route_set(client):
     assert set(paths) == {"/health", "/", "/sales", "/delivery", "/predict",
         "/api/v1/analytics/summary", "/api/v1/analytics/delivery-monthly",
         "/api/v1/analytics/category-item-value", "/api/v1/charts/category-item-counts",
-        "/api/v1/charts/item-price-distribution"}
-    assert "post" not in paths
-    assert client.post("/api/v1/predict").status_code == 404
+        "/api/v1/charts/item-price-distribution", "/api/v1/predict"}
+    assert set(paths["/api/v1/predict"]) == {"post"}
 
 
 def test_summary_preserves_authoritative_fixture_fields_and_null_rate(client):
@@ -107,7 +106,8 @@ def test_all_pages_render_context_and_missing_source_state(tmp_path):
         assert "Authoritative analytics data is not available yet." in response.text
     prediction = client.get("/predict")
     assert prediction.status_code == 200
-    assert "Academic demonstration only" in prediction.text
+    assert "retrospective" in prediction.text.lower()
+    assert "MODEL_UNAVAILABLE" in prediction.text
     assert client.get("/api/v1/analytics/summary").json() == {"detail": "Authoritative analytics source is unavailable", "code": "DATA_UNAVAILABLE"}
 
 
