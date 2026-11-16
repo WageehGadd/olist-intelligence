@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sys
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -272,8 +274,15 @@ def verify_selection(selection_path: Path = DEFAULT_SELECTION_PATH) -> dict[str,
         raise ValueError("Selection manifest version or feature schema is invalid")
     if selection.get("test_evaluated") is not False:
         raise ValueError("Selection manifest does not prove test was unused")
-    artifact_path = ROOT / selection["selected_artifact_path"]
-    if not artifact_path.is_file() or sha256_file(artifact_path) != selection.get("selected_artifact_sha256"):
+    artifact_relative = Path(selection["selected_artifact_path"])
+    if artifact_relative.is_absolute() or ".." in artifact_relative.parts:
+        raise ValueError("Selected model artifact path must be a safe repository-relative path")
+    artifact_path = ROOT / artifact_relative
+    try:
+        artifact_path.resolve().relative_to((ROOT / "models/local").resolve())
+    except ValueError as exc:
+        raise ValueError("Selected model artifact must be under ignored models/local/") from exc
+    if artifact_path.is_symlink() or not artifact_path.is_file() or sha256_file(artifact_path) != selection.get("selected_artifact_sha256"):
         raise ValueError("Selected model artifact is missing or has a checksum mismatch")
     metrics_path = DEFAULT_METRICS_PATH
     if not metrics_path.is_file() or sha256_file(metrics_path) != selection.get("validation_metrics_sha256"):
@@ -297,32 +306,200 @@ def verify_selection(selection_path: Path = DEFAULT_SELECTION_PATH) -> dict[str,
     return selection
 
 
-def evaluate_final_test_once(*, feature_path: Path = DEFAULT_FEATURE_PATH, audit_path: Path = DEFAULT_AUDIT_PATH, split_path: Path = DEFAULT_SPLIT_PATH, manifest_path: Path = DEFAULT_MANIFEST_PATH, selection_path: Path = DEFAULT_SELECTION_PATH, output_path: Path = DEFAULT_TEST_METRICS_PATH, claim_path: Path = DEFAULT_TEST_CLAIM_PATH, classical_metrics_path: Path = ROOT / "data/processed/v3_08_classical_metrics.json") -> dict[str, Any]:
-    """Claim the one-time test before test labels/features are parsed; never retry."""
-    inputs = (feature_path, audit_path, split_path, manifest_path, selection_path, classical_metrics_path)
-    _validate_output_paths(ROOT / "models/local/v3_09_mlp", output_path, inputs)
-    _validate_output_paths(ROOT / "models/local/v3_09_mlp", claim_path, inputs)
-    if output_path.exists() or claim_path.exists():
-        raise FileExistsError("Final test evaluation has already been claimed or written; refusing repeat evaluation")
-    selection = verify_selection(selection_path)
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    classical = _verify_v3_08(classical_metrics_path)
+@dataclass(frozen=True)
+class _TestEvaluationPaths:
+    root: Path
+    feature_path: Path
+    audit_path: Path
+    split_path: Path
+    manifest_path: Path
+    selection_path: Path
+    output_path: Path
+    claim_path: Path
+    classical_metrics_path: Path
+    synthetic_fixture: bool = False
+
+
+def _evaluation_paths(root: Path, *, synthetic_fixture: bool = False) -> _TestEvaluationPaths:
+    processed = root / "data/processed"
+    return _TestEvaluationPaths(
+        root=root,
+        feature_path=processed / "delivery_features.csv",
+        audit_path=processed / "delivery_feature_audit.json",
+        split_path=processed / "delivery_feature_splits.csv",
+        manifest_path=processed / "delivery_split_manifest.json",
+        selection_path=processed / "v3_09_model_selection.json",
+        output_path=processed / "v3_09_final_test_metrics.json",
+        claim_path=processed / "v3_09_final_test_claimed.json",
+        classical_metrics_path=processed / "v3_08_classical_metrics.json",
+        synthetic_fixture=synthetic_fixture,
+    )
+
+
+def _project_evaluation_paths() -> _TestEvaluationPaths:
+    """Return the one fixed location for the real project's test evaluation."""
+    return _evaluation_paths(ROOT)
+
+
+def _synthetic_evaluation_paths_for_test(root: Path) -> _TestEvaluationPaths:
+    """Private fixture path constructor; accepted only for isolated synthetic tests."""
+    return _evaluation_paths(root, synthetic_fixture=True)
+
+
+def _assert_evaluation_context(paths: _TestEvaluationPaths) -> None:
+    if paths.root.is_symlink():
+        raise ValueError("Evaluation root may not be a symlink alias")
+    root = paths.root.resolve()
+    expected = _evaluation_paths(root, synthetic_fixture=paths.synthetic_fixture)
+    path_fields = (
+        "feature_path", "audit_path", "split_path", "manifest_path", "selection_path",
+        "output_path", "claim_path", "classical_metrics_path",
+    )
+    for field in path_fields:
+        actual_path = getattr(paths, field)
+        expected_path = getattr(expected, field)
+        resolved_path = actual_path.resolve()
+        if resolved_path != expected_path.resolve():
+            raise ValueError(f"Noncanonical final-test path rejected: {field}")
+        if actual_path.is_symlink():
+            raise ValueError(f"Symlink alias rejected for final-test path: {field}")
+        try:
+            resolved_path.relative_to(root)
+        except ValueError as exc:
+            raise ValueError(f"Final-test path escapes its permitted root: {field}") from exc
+        parent = actual_path.parent
+        while parent != paths.root and paths.root in parent.parents:
+            if parent.is_symlink():
+                raise ValueError(f"Symlink directory alias rejected for final-test path: {field}")
+            parent = parent.parent
+
+    if not paths.synthetic_fixture:
+        if root != ROOT.resolve():
+            raise ValueError("Real evaluation is restricted to the project's canonical root")
+        return
+
+    # Synthetic fixture evaluation must be isolated from the checkout and all its ancestors.
+    if root == ROOT.resolve() or root in ROOT.resolve().parents or ROOT.resolve() in root.parents:
+        raise ValueError("Synthetic final-test fixture must be isolated outside the project checkout")
+    marker = root / ".v3_09_synthetic_test_fixture.json"
+    try:
+        contents = json.loads(marker.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("Synthetic final-test fixture marker is missing or invalid") from exc
+    if contents != {"purpose": "V3-09 test-gate regression fixture only", "version": 1}:
+        raise ValueError("Synthetic final-test fixture marker is not recognized")
+
+
+def _validate_test_output_collisions(paths: _TestEvaluationPaths, selected_artifact: Path | None = None) -> None:
+    outputs = [paths.claim_path.resolve(), paths.output_path.resolve()]
+    protected = [
+        paths.feature_path.resolve(), paths.audit_path.resolve(), paths.split_path.resolve(),
+        paths.manifest_path.resolve(), paths.selection_path.resolve(), paths.classical_metrics_path.resolve(),
+    ]
+    if selected_artifact is not None:
+        protected.append(selected_artifact.resolve())
+    for index, output in enumerate(outputs):
+        for other_output in outputs[index + 1:]:
+            if output == other_output or output in other_output.parents or other_output in output.parents:
+                raise ValueError("Final-test claim and metrics paths must be distinct and non-overlapping")
+        for input_path in protected:
+            if output == input_path or output in input_path.parents or input_path in output.parents:
+                raise ValueError("Final-test output collides with or contains a protected input")
+    allowed_processed = (paths.root / "data/processed").resolve()
+    for output in outputs:
+        if output.parent != allowed_processed:
+            raise ValueError("Final-test outputs must use the fixed data/processed locations")
+
+
+def _existing_test_evaluation_state(paths: _TestEvaluationPaths) -> None:
+    claim = paths.claim_path
+    metrics = paths.output_path
+    claim_exists = claim.exists() or claim.is_symlink()
+    metrics_exists = metrics.exists() or metrics.is_symlink()
+    if not claim_exists and not metrics_exists:
+        return
+    if claim.is_symlink() or metrics.is_symlink():
+        raise RuntimeError("Final-test claim/metrics state uses a symlink alias; evaluation is blocked for manual review")
+    if not claim_exists:
+        raise RuntimeError("Final-test metrics exist without the durable claim; refusing evaluation and requiring manual review")
+    if not metrics_exists:
+        raise RuntimeError("Final-test claim exists but metrics are missing/incomplete; refusing re-evaluation and requiring manual review")
+    try:
+        claim_record = json.loads(claim.read_text(encoding="utf-8"))
+        metrics_record = json.loads(metrics.read_text(encoding="utf-8"))
+        valid_claim = (
+            isinstance(claim_record, dict)
+            and isinstance(claim_record.get("claimed_at_utc"), str)
+            and isinstance(claim_record.get("selection_manifest_sha256"), str)
+            and len(claim_record["selection_manifest_sha256"]) == 64
+            and claim_record.get("selection_manifest_version") == "v1"
+            and claim_record.get("purpose") == "single authorized final evaluation; claim is never reset"
+        )
+        valid_metrics = (
+            isinstance(metrics_record, dict)
+            and metrics_record.get("task") == "V3-09"
+            and metrics_record.get("test_evaluation_count") == 1
+            and isinstance(metrics_record.get("evaluation_timestamp_utc"), str)
+            and isinstance(claim_record, dict)
+            and isinstance(metrics_record.get("selection_manifest_sha256"), str)
+            and metrics_record.get("selection_manifest_sha256") == claim_record.get("selection_manifest_sha256")
+            and all(isinstance(metrics_record.get(key), str) and len(metrics_record[key]) == 64 for key in ("selected_artifact_sha256", "feature_artifact_sha256", "split_artifact_sha256"))
+        )
+        if not valid_claim or not valid_metrics:
+            raise ValueError("claim or metrics schema is incomplete")
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("Final-test claim/metrics state is malformed or incomplete; refusing re-evaluation and requiring manual review") from exc
+    raise FileExistsError("Final-test evaluation is already recorded; refusing a second evaluation")
+
+
+def _create_test_claim(path: Path, record: dict[str, Any]) -> None:
+    """Atomically acquire the durable one-time claim without replacement."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x", encoding="utf-8") as stream:
+        json.dump(record, stream, indent=2, ensure_ascii=False)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def _evaluate_test_once_for_paths(paths: _TestEvaluationPaths) -> dict[str, Any]:
+    """Core evaluator; synthetic paths are accepted only in a marked isolated fixture."""
+    _assert_evaluation_context(paths)
+    _validate_test_output_collisions(paths)
+    _existing_test_evaluation_state(paths)
+
+    selection = verify_selection(paths.selection_path)
+    manifest = json.loads(paths.manifest_path.read_text(encoding="utf-8"))
+    classical = _verify_v3_08(paths.classical_metrics_path)
     if selection["feature_artifact_sha256"] != classical["feature_artifact_sha256"] or selection["split_artifact_sha256"] != classical["split_artifact_sha256"]:
         raise ValueError("Selection provenance differs from the validated V3-08 frozen split")
     if selection["split_manifest_version"] != manifest.get("manifest_version") or selection["split_boundaries"] != manifest.get("boundaries"):
         raise ValueError("Selection provenance differs from split manifest")
+    artifact_relative = Path(selection["selected_artifact_path"])
+    if artifact_relative.is_absolute() or ".." in artifact_relative.parts:
+        raise ValueError("Selected model artifact path must be relative to the evaluation root")
+    selected_artifact = paths.root / artifact_relative
+    try:
+        selected_artifact.resolve().relative_to(paths.root.resolve())
+    except ValueError as exc:
+        raise ValueError("Selected model artifact escapes the evaluation root") from exc
+    if selected_artifact.is_symlink():
+        raise ValueError("Selected model artifact may not use a symlink alias")
+    _validate_test_output_collisions(paths, selected_artifact)
 
-    # Atomic exclusive claim is durable before any test target/predictor is read.
-    claim_path.parent.mkdir(parents=True, exist_ok=True)
-    claim = {"claimed_at_utc": datetime.now(timezone.utc).isoformat(), "selection_manifest_sha256": sha256_file(selection_path), "selection_manifest_version": selection["manifest_version"], "purpose": "single authorized final evaluation; claim is never reset"}
-    with claim_path.open("x", encoding="utf-8") as stream:
-        json.dump(claim, stream, indent=2)
-        stream.write("\n")
-    # Integrity validation parses/reconstructs the canonical split under the existing V3-08 checks.
-    data = load_training_validation(feature_path, audit_path, split_path, manifest_path)
+    # Exclusive durable claim is acquired before the loader or any test feature/label extraction.
+    claim = {
+        "claimed_at_utc": datetime.now(timezone.utc).isoformat(),
+        "selection_manifest_sha256": sha256_file(paths.selection_path),
+        "selection_manifest_version": selection["manifest_version"],
+        "purpose": "single authorized final evaluation; claim is never reset",
+    }
+    _create_test_claim(paths.claim_path, claim)
+
+    data = load_training_validation(paths.feature_path, paths.audit_path, paths.split_path, paths.manifest_path)
     if selection["feature_artifact_sha256"] != data["feature_sha256"] or selection["split_artifact_sha256"] != data["split_sha256"]:
         raise ValueError("Selection manifest does not match the current verified feature/split artifacts")
-    split_frame = pd.read_csv(split_path, dtype={"order_id": "string", "purchase_ts": "string", "customer_state": "string"})
+    split_frame = pd.read_csv(paths.split_path, dtype={"order_id": "string", "purchase_ts": "string", "customer_state": "string"})
     test = split_frame.loc[split_frame["split"].eq("test")]
     if len(test) != int(manifest["counts_and_label_distribution"]["test"]["rows"]):
         raise ValueError("Test row count does not match validated split manifest")
@@ -333,18 +510,19 @@ def evaluate_final_test_once(*, feature_path: Path = DEFAULT_FEATURE_PATH, audit
     for column in FEATURE_NAMES:
         if column != "customer_state":
             X[column] = pd.to_numeric(X[column], errors="raise")
-    candidate = selection["selected_candidate"]
-    artifact_path = ROOT / selection["selected_artifact_path"]
-    model = joblib.load(artifact_path)
+    model = joblib.load(selected_artifact)
     probability = positive_class_probability(model, X)
     threshold = float(selection["selected_threshold"])
     if not 0 <= threshold <= 1:
         raise ValueError("Frozen threshold is outside [0, 1]")
     result = {
         "task": "V3-09", "evaluation_timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "selected_candidate": candidate, "selection_manifest_sha256": sha256_file(selection_path),
-        "selection_manifest_version": selection["manifest_version"], "selected_artifact_path": selection["selected_artifact_path"],
-        "selected_artifact_sha256": sha256_file(artifact_path), "feature_artifact_sha256": data["feature_sha256"],
+        "selected_candidate": selection["selected_candidate"],
+        "selection_manifest_sha256": claim["selection_manifest_sha256"],
+        "selection_manifest_version": selection["manifest_version"],
+        "selected_artifact_path": selection["selected_artifact_path"],
+        "selected_artifact_sha256": sha256_file(selected_artifact),
+        "feature_artifact_sha256": data["feature_sha256"],
         "split_artifact_sha256": data["split_sha256"], "split_manifest_version": manifest["manifest_version"],
         "test_rows": int(len(y)), "late_count": int(y.sum()), "positive_prevalence": float(y.mean()),
         "average_precision": float(average_precision_score(y, probability)), "roc_auc": float(roc_auc_score(y, probability)),
@@ -352,11 +530,17 @@ def evaluate_final_test_once(*, feature_path: Path = DEFAULT_FEATURE_PATH, audit
         "at_frozen_threshold": threshold_metrics(y, probability, threshold),
         "test_evaluation_count": 1, "sensitivity_analysis": "not performed",
     }
-    # Exclusive output; claim remains if a crash happens, forbidding another test look.
-    with output_path.open("x", encoding="utf-8") as stream:
+    with paths.output_path.open("x", encoding="utf-8") as stream:
         json.dump(result, stream, indent=2, ensure_ascii=False)
         stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
     return result
+
+
+def evaluate_final_test_once() -> dict[str, Any]:
+    """Evaluate the real project's selected model at its one fixed, durable location."""
+    return _evaluate_test_once_for_paths(_project_evaluation_paths())
 
 
 def main() -> int:

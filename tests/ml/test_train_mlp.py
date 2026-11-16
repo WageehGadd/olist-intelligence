@@ -53,39 +53,40 @@ def test_selection_is_validation_ap_only_with_deterministic_ties():
         select_candidate(tied)
 
 
-def test_final_test_evaluation_claim_cannot_be_reused(tmp_path, monkeypatch):
+def _synthetic_gate_fixture(tmp_path, monkeypatch):
     import hashlib
     import json
     import joblib
+    import src.ml.train_mlp as module
     from sklearn.linear_model import LogisticRegression
     from sklearn.pipeline import Pipeline
-    import src.ml.train_mlp as module
     from src.ml.preprocessing import make_preprocessor
 
+    root = tmp_path / "isolated-v3-09-fixture"
+    processed = root / "data/processed"
+    processed.mkdir(parents=True)
+    (root / ".v3_09_synthetic_test_fixture.json").write_text(json.dumps({"purpose": "V3-09 test-gate regression fixture only", "version": 1}))
     frame, labels = _rows(12)
     fitted = Pipeline([("preprocessor", make_preprocessor()), ("classifier", LogisticRegression(random_state=42))])
     fitted.fit(frame, labels)
-    root = tmp_path
-    artifact = root / "selected.joblib"
+    artifact = root / "models/local/selected.joblib"
+    artifact.parent.mkdir(parents=True)
     joblib.dump(fitted, artifact)
     artifact_sha = hashlib.sha256(artifact.read_bytes()).hexdigest()
     feature_sha, split_sha = "a" * 64, "b" * 64
     bounds = {"train": {"start_inclusive": "2017-01-01", "end_exclusive": "2018-01-01"}, "validation": {"start_inclusive": "2018-01-01", "end_exclusive": "2018-04-01"}, "test": {"start_inclusive": "2018-04-01", "end_exclusive": "2018-09-01"}}
-    manifest_path = root / "manifest.json"
-    manifest_path.write_text(json.dumps({"manifest_version": "v1", "boundaries": bounds, "counts_and_label_distribution": {"test": {"rows": 4}}}))
-    split_path = root / "split.csv"
+    paths = module._synthetic_evaluation_paths_for_test(root)
+    paths.manifest_path.write_text(json.dumps({"manifest_version": "v1", "boundaries": bounds, "counts_and_label_distribution": {"test": {"rows": 4}}}))
     split_frame = frame.iloc[:4].copy()
     split_frame.insert(0, "order_id", [f"t{i}" for i in range(4)])
     split_frame.insert(1, "purchase_ts", [f"2018-04-0{i+1} 10:00:00" for i in range(4)])
     split_frame.insert(10, "late", labels[:4])
     split_frame["split"] = "test"
-    split_frame.to_csv(split_path, index=False)
-    other_paths = [root / name for name in ("features.csv", "audit.json", "classical.json")]
-    for path in other_paths:
+    split_frame.to_csv(paths.split_path, index=False)
+    for path in (paths.feature_path, paths.audit_path, paths.classical_metrics_path):
         path.write_text("{}")
-    selection = {"manifest_version": "v1", "selected_candidate": "LogisticRegression", "selected_threshold": 0.5, "feature_names_in_order": list(FEATURE_NAMES), "feature_artifact_sha256": feature_sha, "split_artifact_sha256": split_sha, "split_manifest_version": "v1", "split_boundaries": bounds, "selected_artifact_path": "selected.joblib", "selected_artifact_sha256": artifact_sha}
-    (root / "selection.json").write_text(json.dumps(selection))
-    monkeypatch.setattr(module, "ROOT", root)
+    selection = {"manifest_version": "v1", "selected_candidate": "LogisticRegression", "selected_threshold": 0.5, "feature_names_in_order": list(FEATURE_NAMES), "feature_artifact_sha256": feature_sha, "split_artifact_sha256": split_sha, "split_manifest_version": "v1", "split_boundaries": bounds, "selected_artifact_path": "models/local/selected.joblib", "selected_artifact_sha256": artifact_sha}
+    paths.selection_path.write_text(json.dumps(selection))
     monkeypatch.setattr(module, "verify_selection", lambda path: selection)
     monkeypatch.setattr(module, "_verify_v3_08", lambda path: {"feature_artifact_sha256": feature_sha, "split_artifact_sha256": split_sha})
     calls = {"load": 0}
@@ -93,14 +94,92 @@ def test_final_test_evaluation_claim_cannot_be_reused(tmp_path, monkeypatch):
         calls["load"] += 1
         return {"feature_sha256": feature_sha, "split_sha256": split_sha}
     monkeypatch.setattr(module, "load_training_validation", fake_load)
-    monkeypatch.setattr(module, "_validate_output_paths", lambda *args, **kwargs: None)
-    output, claim = root / "result.json", root / "claimed.json"
-    result = module.evaluate_final_test_once(feature_path=other_paths[0], audit_path=other_paths[1], split_path=split_path, manifest_path=manifest_path, selection_path=root / "selection.json", output_path=output, claim_path=claim, classical_metrics_path=other_paths[2])
+    return module, paths, calls
+
+
+def test_synthetic_first_evaluation_and_alternate_path_bypass_are_refused(tmp_path, monkeypatch):
+    from dataclasses import replace
+    import src.ml.train_mlp as module
+    module, paths, calls = _synthetic_gate_fixture(tmp_path, monkeypatch)
+    result = module._evaluate_test_once_for_paths(paths)
     assert result["test_rows"] == 4 and result["test_evaluation_count"] == 1
-    assert calls["load"] == 1 and output.exists() and claim.exists()
-    with pytest.raises(FileExistsError, match="already been claimed"):
-        module.evaluate_final_test_once(feature_path=other_paths[0], audit_path=other_paths[1], split_path=split_path, manifest_path=manifest_path, selection_path=root / "selection.json", output_path=output, claim_path=claim, classical_metrics_path=other_paths[2])
+    assert paths.claim_path.is_file() and paths.output_path.is_file()
+    claim_bytes, metrics_bytes = paths.claim_path.read_bytes(), paths.output_path.read_bytes()
+    with pytest.raises(TypeError):
+        module.evaluate_final_test_once(claim_path=tmp_path / "alternate-claim.json", output_path=tmp_path / "alternate-result.json")
+    alternate = replace(paths, claim_path=paths.root / "data/processed/alternate-claim.json", output_path=paths.root / "data/processed/alternate-result.json")
+    with pytest.raises(ValueError, match="Noncanonical"):
+        module._evaluate_test_once_for_paths(alternate)
+    with pytest.raises(FileExistsError, match="already recorded"):
+        module._evaluate_test_once_for_paths(paths)
     assert calls["load"] == 1
+    assert paths.claim_path.read_bytes() == claim_bytes and paths.output_path.read_bytes() == metrics_bytes
+    assert not (paths.root / "data/processed/alternate-claim.json").exists()
+    assert not (paths.root / "data/processed/alternate-result.json").exists()
+
+
+def test_synthetic_gate_rejects_symlink_alias_and_output_input_collision(tmp_path, monkeypatch):
+    from dataclasses import replace
+    import src.ml.train_mlp as module
+    module, paths, calls = _synthetic_gate_fixture(tmp_path, monkeypatch)
+    alias = paths.root / "data/processed/claim-alias.json"
+    alias.symlink_to(paths.claim_path.name)
+    with pytest.raises(ValueError, match="Noncanonical|Symlink"):
+        module._evaluate_test_once_for_paths(replace(paths, claim_path=alias))
+    with pytest.raises(ValueError, match="Noncanonical"):
+        module._evaluate_test_once_for_paths(replace(paths, output_path=paths.split_path))
+    with pytest.raises(ValueError, match="collides with or contains"):
+        module._validate_test_output_collisions(replace(paths, output_path=paths.split_path))
+    assert calls["load"] == 0
+    assert not paths.claim_path.exists() and not paths.output_path.exists()
+
+
+def test_synthetic_fixture_cannot_load_an_artifact_outside_its_root(tmp_path, monkeypatch):
+    import src.ml.train_mlp as module
+    module, paths, calls = _synthetic_gate_fixture(tmp_path, monkeypatch)
+    selection = module.verify_selection(paths.selection_path)
+    selection["selected_artifact_path"] = "../../outside.joblib"
+    monkeypatch.setattr(module, "verify_selection", lambda path: selection)
+    with pytest.raises(ValueError, match="safe|relative"):
+        module._evaluate_test_once_for_paths(paths)
+    assert calls["load"] == 0
+    assert not paths.claim_path.exists() and not paths.output_path.exists()
+
+
+@pytest.mark.parametrize("state", ["claim_missing_metrics", "metrics_missing_claim", "malformed_records"])
+def test_existing_incomplete_or_malformed_test_state_fails_closed(tmp_path, monkeypatch, state):
+    import json
+    import src.ml.train_mlp as module
+    module, paths, calls = _synthetic_gate_fixture(tmp_path, monkeypatch)
+    if state == "claim_missing_metrics":
+        paths.claim_path.write_text("{}")
+        expected = "claim exists but metrics are missing"
+    elif state == "metrics_missing_claim":
+        paths.output_path.write_text("{}")
+        expected = "metrics exist without the durable claim"
+    else:
+        paths.claim_path.write_text("[]")
+        paths.output_path.write_text("{}")
+        expected = "malformed or incomplete"
+    with pytest.raises(RuntimeError, match=expected):
+        module._evaluate_test_once_for_paths(paths)
+    assert calls["load"] == 0
+
+
+def test_atomic_claim_allows_only_one_concurrent_creator(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    import src.ml.train_mlp as module
+    claim = tmp_path / "one-time-claim.json"
+    record = {"purpose": "synthetic concurrency test"}
+    def attempt():
+        try:
+            module._create_test_claim(claim, record)
+            return "created"
+        except FileExistsError:
+            return "refused"
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(lambda _: attempt(), range(2)))
+    assert sorted(outcomes) == ["created", "refused"]
 
 
 def test_test_only_cli_does_not_rerun_validation(monkeypatch):
