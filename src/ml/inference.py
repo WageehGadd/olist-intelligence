@@ -1,8 +1,10 @@
-"""Local selected-model inference handoff for V3-13 (no API route)."""
+"""Verified local selected-model loading and inference shared by API and offline callers."""
 
 from __future__ import annotations
 
 import json
+import pickle
+import zlib
 from numbers import Integral, Real
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -28,8 +30,11 @@ def load_selected_model(selection_path: Path = DEFAULT_SELECTION_PATH) -> tuple[
         model = joblib.load(artifact)
     except FileNotFoundError as exc:
         raise InferenceArtifactError("Selected model artifact is unavailable") from exc
-    except (OSError, ValueError, KeyError, json.JSONDecodeError, EOFError) as exc:
-        raise InferenceArtifactError(f"Selected model artifact is invalid: {exc}") from exc
+    except (
+        OSError, ValueError, KeyError, TypeError, AttributeError, ImportError,
+        UnicodeError, json.JSONDecodeError, EOFError, pickle.UnpicklingError, zlib.error,
+    ) as exc:
+        raise InferenceArtifactError("Selected model artifact is invalid or unavailable") from exc
     if not hasattr(model, "predict_proba") or not hasattr(model, "named_steps"):
         raise InferenceArtifactError("Selected artifact is not a compatible fitted sklearn pipeline")
     if list(selection.get("feature_names_in_order", [])) != list(FEATURE_NAMES):

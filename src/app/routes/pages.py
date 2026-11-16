@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 
 from src.app.dependencies import get_analytics_service, get_template_engine
 from src.app.services.analytics import AnalyticsService, DataUnavailable
+from src.app.schemas import PREDICTION_NOTICE, PredictionRequest
 
 router = APIRouter(tags=["server-rendered pages"])
 PAGE_URLS = {"overview": "/", "sales": "/sales", "delivery": "/delivery", "predict": "/predict"}
@@ -34,11 +35,8 @@ def _page_data(name: str, service: AnalyticsService) -> dict:
         result = {"period": "all", "kpis": load(lambda: service.summary("all")["kpis"], {}),
                 "delivery_monthly": load(lambda: service.delivery_monthly("all"), _chart_empty())}
     else:
-        result = {"request_schema": {
-        "purchase_timestamp": "source-naive YYYY-MM-DDTHH:MM:SS string",
-        "estimated_delivery_date": "YYYY-MM-DD string", "customer_state": "Brazilian UF",
-        "items": "non-empty array of {price, freight_value} objects"},
-        "notice": "Academic demonstration only. Prediction is not implemented in V3-12; no result is available.",
+        result = {"request_schema": PredictionRequest.model_json_schema(),
+        "notice": PREDICTION_NOTICE + " The endpoint may return MODEL_UNAVAILABLE when verified local artifacts are absent.",
         "result": None, "error": None}
     return {**result, **state}
 
