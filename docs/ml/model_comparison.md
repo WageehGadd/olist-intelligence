@@ -97,3 +97,44 @@ Validation prevalence (12.88%) is more than twice training prevalence (5.65%). P
 The label is retrospective and conditional on eventual delivery. No extraction timestamp proves complete follow-up; unresolved/non-delivered orders are not negative examples. The historical extract does not prove that final promise dates, cart/item amounts, or customer state were available in the same form at order creation. These limitations constrain claims about live deployment.
 
 V3-09 should use the same feature rows, chronological partitions, and validation-only threshold/evaluation protocol for its small MLP comparison. Keep final test outcomes out of model selection and performance evaluation until classical and MLP candidates, features, and threshold policy are frozen. Held-out rows may be read solely for split-artifact integrity verification. Logistic Regression is only the provisional classical AP leader; no final deployed model is selected here.
+
+
+# V3-09 — Small MLP comparison and final model selection
+
+## Environment and method
+
+The existing project environment uses Python 3.10.20, scikit-learn 1.7.2, NumPy 2.2.6, pandas 2.3.3, and joblib 1.6.0. TensorFlow/Keras and PyTorch were not available, so V3-09 used the already installed scikit-learn `MLPClassifier`; no dependency was installed or changed. Its `partial_fit` API permits one bounded training epoch at a time. This was suitable for the requested small feed-forward experiment on the existing laptop environment.
+
+Reproduce the validation run once in a fresh local artifact state with `.venv/bin/python -m src.ml.train_mlp`; the command refuses to overwrite existing V3-09 outputs. After reviewing the frozen selection manifest, the separate `.venv/bin/python -m src.ml.train_mlp --evaluate-test-once` command performs only the one-time final evaluation and refuses a second claim. The sole architecture was a 32-unit then 16-unit ReLU hidden network with binary logistic output, Adam, learning rate 0.001, alpha 0.0001, batch size 256, and random seed 42. Training was capped at 120 epochs. The numeric scaler/imputers and categorical imputer/one-hot encoder were fitted on the 43,426 training rows only. Early stopping was implemented externally against binary cross-entropy on the fixed chronological validation partition, with patience 12 and minimum improvement 1e-5; the weights at the best validation-loss epoch were restored (best epoch 23; patience stopped the run at epoch 35; fit time 1.052 seconds). No fit warnings were recorded. No random internal early-stopping holdout, architecture search, class weighting, or test-driven tuning was used. A seed fixes the intended random stream, but bit-for-bit equivalence across platforms/library builds is not claimed.
+
+The same V3-07 feature artifact, eight predictors in frozen order, target, and chronological partitions were validated using the V3-08 integrity loader. Reference counts were train 43,426 (2,453 late), validation 20,627 (2,657 late), and reserved test 32,150. All V3-08 fitted candidate checksums were verified against the existing local metrics record before comparison.
+
+## Validation comparison and final selection
+
+Primary ranking was declared before the test was accessed: highest validation Average Precision (`sklearn.average_precision_score`). Exact ties prefer Logistic Regression, then Random Forest, then Small MLP, then Dummy. Each candidate retains the shared V3-08 validation-F1 threshold policy (maximize F1 over observed validation probabilities plus 0, 0.5, and 1; ties choose the higher threshold); thresholds do not affect AP ranking. The MLP threshold is selected on validation only.
+
+| Candidate | Validation AP | ROC-AUC | F1 threshold | Precision | Recall | F1 | Prevalence | Predicted-positive rate | Confusion matrix [[TN, FP], [FN, TP]] |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Dummy prior | 0.128812 | 0.500000 | 0.056487 | 0.128812 | 1.000000 | 0.228225 | 0.128812 | 1.000000 | [[0, 17,970], [0, 2,657]] |
+| Logistic Regression | 0.270696 | 0.705939 | 0.036043 | 0.301967 | 0.427550 | 0.353949 | 0.128812 | 0.182382 | [[15,344, 2,626], [1,521, 1,136]] |
+| Random Forest | 0.199838 | 0.624731 | 0.045893 | 0.202855 | 0.459917 | 0.281534 | 0.128812 | 0.292044 | [[13,168, 4,802], [1,435, 1,222]] |
+| Small MLP | 0.161813 | 0.545081 | 0.016790 | 0.134275 | 0.941287 | 0.235023 | 0.128812 | 0.902991 | [[1,845, 16,125], [156, 2,501]] |
+
+Threshold-0.5 validation context (the same shared metrics; it does not alter ranking or the selected validation threshold):
+
+| Candidate | Precision | Recall | F1 | Predicted-positive rate | Confusion matrix [[TN, FP], [FN, TP]] |
+|---|---:|---:|---:|---:|---|
+| Dummy prior | 0.000000 | 0.000000 | 0.000000 | 0.000000 | [[17,970, 0], [2,657, 0]] |
+| Logistic Regression | 1.000000 | 0.000376 | 0.000752 | 0.000048 | [[17,970, 0], [2,656, 1]] |
+| Random Forest | 0.000000 | 0.000000 | 0.000000 | 0.000000 | [[17,970, 0], [2,657, 0]] |
+| Small MLP | 0.000000 | 0.000000 | 0.000000 | 0.000000 | [[17,970, 0], [2,657, 0]] |
+
+The MLP validation values above are from the verified local run and are recorded in ignored `data/processed/v3_09_mlp_metrics.json`. Logistic Regression remains the final candidate by the declared validation AP criterion (0.270696); the MLP AP was 0.161813. Final selection is frozen with the unchanged candidate threshold in `data/processed/v3_09_model_selection.json`. The manifest records the chosen candidate, rationale, selected artifact SHA-256, feature/split hashes, split boundaries, validation comparison hash, and UTC freeze time. The manifest is created exclusively and the run refuses to overwrite prior V3-09 outputs.
+
+The selected-model-only final test evaluation was executed exactly once on 2026-11-16 UTC, after the validation comparison and selection manifest were frozen and reverified. Before test target/predictor fields were extracted, the gate verified selection and artifact provenance, then exclusively created `data/processed/v3_09_final_test_claimed.json`. This durable claim is never removed or reset; an existing claim or result causes refusal. Results were written once to `data/processed/v3_09_final_test_metrics.json`. On 32,150 reserved test orders, 1,421 were late (4.41991% prevalence). With the frozen Logistic Regression and unchanged validation threshold 0.0360428262, test AP was 0.078627, ROC-AUC 0.671692, precision 0.065669, recall 0.710063, F1 0.120219, predicted-positive rate 0.477916, and confusion matrix [[16,373, 14,356], [412, 1,009]]. No sensitivity analysis was performed. The lower test prevalence and ranking score show material temporal generalization degradation; these results are reported without changing model selection.
+
+## Inference handoff and limitations
+
+`src/ml/inference.py` provides `load_selected_model`, `predict_one`, and deterministic-order `predict_batch` for V3-13; it creates no API route. The input is exactly the eight frozen features in Shared Contracts order, rejects missing/reordered/extra keys, missing or nonfinite numeric values, and non-Brazilian-UF states. It loads only the artifact named by the checksum-verified local selection manifest, reuses its fitted preprocessing, applies the frozen validation threshold, and returns `prediction`, `probability_late`, `threshold`, and SHA-256-based `model_version`. Missing or incompatible artifacts raise `InferenceArtifactError`; API-level error mapping remains V3-13. Local files are under ignored `models/local/v3_09_mlp/` and `data/processed/`; no binary or generated data belongs in Git.
+
+The temporal train/validation prevalence shift (5.65% to 12.88%) remains material. MLP early stopping reuses validation loss and may overfit that stopping criterion; the validation metrics are therefore comparative, not an unbiased second holdout. No calibration was performed. The target remains retrospective and conditioned on eventual delivery; historical availability of promise-date, item amounts, and customer state at prediction time is unproven. The small network and single configuration do not establish neural-network superiority.
