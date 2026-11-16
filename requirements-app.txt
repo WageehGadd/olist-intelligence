@@ -1,0 +1,7 @@
+# V3-12 runtime and TestClient dependencies; validated with Python 3.10.20.
+fastapi==0.162.5
+starlette==1.7.0
+pydantic==2.14.3
+httpx==0.28.1
+jinja2==3.1.6
+uvicorn==0.54.0
