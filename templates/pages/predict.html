@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Prediction | Olist Intelligence{% endblock %}
+
+{% block content %}
+
+{% macro item_row() %}
+    <div class="item-row" role="group">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="item-title">Item</h3>
+            <button type="button" class="btn btn-outline-danger btn-sm remove-item-btn">Remove</button>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-sm-6 form-field">
+                <label class="form-label">Price (BRL)</label>
+                <input type="number" class="form-control" name="price" min="0" step="any" inputmode="decimal" required>
+                <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="col-sm-6 form-field">
+                <label class="form-label">Freight Value (BRL)</label>
+                <input type="number" class="form-control" name="freight_value" min="0" step="any" inputmode="decimal" required>
+                <div class="invalid-feedback"></div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+<header class="page-header">
+    <h1>Delivery Prediction</h1>
+    <p class="page-lead">Estimate whether an order is likely to be delivered late.</p>
+</header>
+
+<div class="alert alert-info" role="note">{{ notice }}</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-7">
+        <div class="panel">
+            <h2 class="panel-title mb-4">Order Information</h2>
+
+            <form id="prediction-form" novalidate>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-6 form-field">
+                        <label for="purchase-timestamp" class="form-label">Purchase Date and Time</label>
+                        <input type="datetime-local" class="form-control" id="purchase-timestamp" max="9999-12-31T23:59" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="col-md-6 form-field">
+                        <label for="estimated-delivery-date" class="form-label">Estimated Delivery Date</label>
+                        <input type="date" class="form-control" id="estimated-delivery-date" max="9999-12-31" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="col-md-6 form-field">
+                        <label for="customer-state" class="form-label">Customer State (UF)</label>
+                        <select class="form-select" id="customer-state" required>
+                            <option value="" selected disabled>Select a state</option>
+                            {% for state in (request_schema or {}).get("properties", {}).get("customer_state", {}).get("enum", []) %}
+                                <option value="{{ state }}">{{ state }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="panel-title mb-0">Order Items</h2>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="add-item-btn">Add Item</button>
+                </div>
+
+                <div id="items-container">{{ item_row() }}</div>
+                <template id="item-template">{{ item_row() }}</template>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary" id="predict-btn">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" aria-hidden="true"></span>
+                        <span class="btn-label">Predict Delivery Status</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="sticky-result">
+            <h2 class="section-title">Prediction Result</h2>
+
+            <div id="prediction-result" aria-live="polite" aria-atomic="true">
+                <div class="empty-state">
+                    <p class="empty-state-title">No prediction yet</p>
+                    <p class="mb-0">Complete the order details and run the prediction to see the result here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ asset_prefix }}/js/predict.js" defer></script>
+{% endblock %}
