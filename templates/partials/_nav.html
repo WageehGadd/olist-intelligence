@@ -1,0 +1,39 @@
+{% set links = [
+    ("Overview", page_urls.overview),
+    ("Sales", page_urls.sales),
+    ("Delivery", page_urls.delivery),
+    ("Predict", page_urls.predict),
+] %}
+
+<div class="container">
+
+    <a class="navbar-brand" href="{{ page_urls.overview }}">Olist Intelligence</a>
+
+    <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#mainNavbar"
+        aria-controls="mainNavbar"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+    >
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto">
+            {% for label, url in links %}
+                {% set is_current = request.url.path == url %}
+                <li class="nav-item">
+                    <a
+                        class="nav-link{% if is_current %} active{% endif %}"
+                        href="{{ url }}"
+                        {%- if is_current %} aria-current="page"{% endif %}
+                    >{{ label }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>

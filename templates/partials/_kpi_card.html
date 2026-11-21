@@ -1,0 +1,44 @@
+{# Expects `key` and `kpi` from the calling loop. #}
+{% set labels = {
+    "orders_total": "Total Orders",
+    "customers_unique": "Unique Customers",
+    "delivered_orders": "Delivered Orders",
+    "item_value_delivered": "Delivered Item Value",
+    "freight_charged_delivered": "Delivered Freight Charged",
+    "delivered_item_value_plus_freight": "Delivered Item Value + Freight",
+    "category_item_value": "Category Item Value",
+    "delay_rate_calendar": "Delay Rate (Calendar)",
+    "eligible_late_orders": "Late Orders (Eligible)",
+} %}
+
+{% if kpi.value is none %}
+    {% set shown = "—" %}
+{% elif kpi.unit == "fraction" %}
+    {% set shown = "%.1f%%" | format(kpi.value * 100) %}
+{% elif kpi.value is integer %}
+    {% set shown = "{:,}".format(kpi.value) %}
+{% else %}
+    {% set shown = "{:,.2f}".format(kpi.value) %}
+{% endif %}
+
+<div class="card kpi-card{% if key in ['delay_rate_calendar', 'eligible_late_orders'] %} kpi-card-late{% endif %} h-100">
+    <div class="card-body">
+
+        <p class="kpi-label">{{ labels.get(key, key.replace("_", " ") | title) }}</p>
+
+        <p class="kpi-value">{{ shown }}</p>
+
+        {% if kpi.unit == "fraction" %}
+            {% if kpi.numerator_count is not none and kpi.denominator_count is not none %}
+                <p class="kpi-caption">
+                    {{ "{:,}".format(kpi.numerator_count) }} of
+                    {{ "{:,}".format(kpi.denominator_count) }}
+                    {{ kpi.population }}
+                </p>
+            {% endif %}
+        {% elif kpi.unit %}
+            <p class="kpi-caption">{{ kpi.unit }}</p>
+        {% endif %}
+
+    </div>
+</div>
