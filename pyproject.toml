@@ -1,19 +1,16 @@
 [project]
 name = "olist-intelligence"
 version = "0.1.0"
-description = "Add your description here"
+description = "Olist e-commerce analytics and delivery delay prediction"
 readme = "README.md"
 authors = [
     { name = "Hamza", email = "hamza99ayman250@gmail.com" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.10,<3.11"
 dependencies = [
-    "pandas>=3.1.1",
+    "pandas<3.1",
+    "pytest>=9.2.0",
 ]
 
-[project.scripts]
-olist-intelligence = "olist_intelligence:main"
-
-[build-system]
-requires = ["uv_build>=0.12.13,<0.13.0"]
-build-backend = "uv_build"
+[tool.uv]
+package = false
