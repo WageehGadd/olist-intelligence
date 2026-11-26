@@ -5,30 +5,30 @@ PRAGMA foreign_keys = ON;
 
 -- 1. Customers
 CREATE TABLE IF NOT EXISTS customers (
-    customer_id TEXT PRIMARY KEY,
+    customer_id TEXT NOT NULL PRIMARY KEY,
     customer_unique_id TEXT NOT NULL,
-    customer_zip_code_prefix INTEGER,
+    customer_zip_code_prefix TEXT,
     customer_city TEXT,
     customer_state TEXT NOT NULL
 );
 
 -- 2. Sellers
 CREATE TABLE IF NOT EXISTS sellers (
-    seller_id TEXT PRIMARY KEY,
-    seller_zip_code_prefix INTEGER,
+    seller_id TEXT NOT NULL PRIMARY KEY,
+    seller_zip_code_prefix TEXT,
     seller_city TEXT,
     seller_state TEXT
 );
 
 -- 3. Product Category Translation
 CREATE TABLE IF NOT EXISTS product_category_name_translation (
-    product_category_name TEXT PRIMARY KEY,
+    product_category_name TEXT NOT NULL PRIMARY KEY,
     product_category_name_english TEXT NOT NULL
 );
 
 -- 4. Products
 CREATE TABLE IF NOT EXISTS products (
-    product_id TEXT PRIMARY KEY,
+    product_id TEXT NOT NULL PRIMARY KEY,
     product_category_name TEXT,
     product_name_lenght INTEGER,
     product_description_lenght INTEGER,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS products (
 
 -- 5. Orders
 CREATE TABLE IF NOT EXISTS orders (
-    order_id TEXT PRIMARY KEY,
+    order_id TEXT NOT NULL PRIMARY KEY,
     customer_id TEXT NOT NULL,
     order_status TEXT NOT NULL,
     order_purchase_timestamp TEXT NOT NULL,
