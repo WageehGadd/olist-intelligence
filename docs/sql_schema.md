@@ -54,7 +54,7 @@ The loader was run against the original local Olist CSVs. Each source row count 
 | `order_items` | 112,650 |
 | `order_payments` | 103,886 |
 
-Relationship checks found 99,441 orders with customers, 112,650 items with their order/product/seller, 103,886 payments with orders, and 98,666 orders with both an item and customer. There are 610 products with a missing category and 2 distinct non-null category values without a translation. The historical T-00 SQL documentation reported 13 untranslated categories; that figure does not match this verified local run and remains an explicit source-document discrepancy. No raw values were altered to reconcile it. The nine raw CSV hashes matched the existing T-00 hash manifest before the loader run; the raw files were not modified.
+Relationship checks found 99,441 orders with customers, 112,650 items with their order/product/seller, 103,886 payments with orders, and 98,666 orders with both an item and customer. Thirteen product rows have non-null category names without a translation; those rows represent 2 distinct untranslated category names. Separately, 610 products have a missing category name. These row and distinct-name counts are consistent with the T-00 audit. The nine raw CSV hashes matched the existing T-00 hash manifest before the loader run; the raw files were not modified.
 
 ## Handoff
 
