@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Overview | Olist Intelligence{% endblock %}
+
+{% block content %}
+
+<header class="page-header">
+    <h1>Overview</h1>
+    <p class="page-lead">A general overview of Olist e-commerce performance.</p>
+    {% if period %}
+        <span class="period-badge">
+            Selected period: {{ "All periods" if period == "all" else period }}
+        </span>
+    {% endif %}
+</header>
+
+<section class="dashboard-section" aria-labelledby="kpi-heading">
+    <h2 class="section-title" id="kpi-heading">Key Performance Indicators</h2>
+
+    {% if kpis %}
+        <div class="row g-3">
+            {% for key, kpi in kpis.items() %}
+                <div class="col-12 col-sm-6 col-lg-4">
+                    {% include "partials/_kpi_card.html" %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        {% set title = "No KPI Data Available" %}
+        {% set message = "KPI information will appear here when analytics data is available." %}
+        {% include "partials/_empty_state.html" %}
+    {% endif %}
+</section>
+
+<section class="dashboard-section" aria-labelledby="performance-heading">
+    <h2 class="section-title" id="performance-heading">Performance Overview</h2>
+
+    <div class="row g-3">
+
+        <div class="col-12 col-lg-6">
+            <div class="panel h-100">
+                <h3 class="panel-title">Sales Performance</h3>
+                <p class="panel-subtitle">Delivered item value compared with freight charged.</p>
+
+                {% if kpis and kpis.item_value_delivered and kpis.freight_charged_delivered %}
+                    <div id="overview-sales-chart" class="chart-area" data-chart="overview-sales" data-payload='{{ kpis | tojson }}' role="img" aria-label="Bar chart comparing delivered item value and freight charged"></div>
+                {% else %}
+                    {% set title = "No Sales Data Available" %}
+                    {% set message = "Sales performance will appear here when analytics data is available." %}
+                    {% include "partials/_empty_state.html" %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="panel h-100">
+                <h3 class="panel-title">Delivery Performance</h3>
+                <p class="panel-subtitle">Late share of eligible delivered orders.</p>
+
+                {% if kpis and kpis.delay_rate_calendar and kpis.delay_rate_calendar.denominator_count %}
+                    <div id="overview-delivery-chart" class="chart-area" data-chart="overview-delivery" data-payload='{{ kpis | tojson }}' role="img" aria-label="Donut chart of late and not late eligible delivered orders"></div>
+                {% else %}
+                    {% set title = "No Delivery Data Available" %}
+                    {% set message = "Delivery performance will appear here when analytics data is available." %}
+                    {% include "partials/_empty_state.html" %}
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
